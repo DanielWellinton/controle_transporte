@@ -25,8 +25,13 @@ class PontoDeParada extends Model
 
     public function rotas(): BelongsToMany
     {
-        return $this->belongsToMany(Rota::class)
-                    ->withPivot('ordem', 'ativo')
-                    ->withTimestamps();
+        return $this->belongsToMany(
+            Rota::class, 
+            'rota_ponto_de_paradas', 
+            'ponto_de_parada_id', 
+            'rota_id'
+        )
+        ->withPivot('ordem', 'ativo')
+        ->withTimestamps();
     }
 }

@@ -22,10 +22,15 @@ class Rota extends Model
 
     public function pontosDeParada(): BelongsToMany
     {
-        return $this->belongsToMany(PontoDeParada::class)
-                    ->withPivot('ordem', 'ativo')
-                    ->orderBy('ponto_de_parada_rota.ordem')
-                    ->withTimestamps();
+        return $this->belongsToMany(
+            PontoDeParada::class, 
+            'rota_ponto_de_paradas',
+            'rota_id', 
+            'ponto_de_parada_id'
+        )
+        ->withPivot('ordem', 'ativo')
+        ->orderBy('rota_ponto_de_paradas.ordem')
+        ->withTimestamps();
     }
 
     public function viagens(): HasMany

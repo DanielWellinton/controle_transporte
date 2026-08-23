@@ -1,35 +1,85 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Veículos</h2>
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Veículos') }}
+            </h2>
+            <a href="{{ route('veiculos.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm transition-colors shadow-sm">
+                Novo Veículo
+            </a>
+        </div>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Placa</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Passageiros</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($veiculos as $veiculo)
+            @if(session('success'))
+                <div class="mb-6 flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800 shadow-sm" role="alert">
+                    <div class="flex items-center space-x-3">
+                        <svg class="h-5 w-5 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="text-sm font-medium">{{ session('success') }}</span>
+                    </div>
+                </div>
+            @endif
+
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $veiculo->descricao }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap font-mono">{{ $veiculo->placa }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $veiculo->numero_passageiros }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $veiculo->ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                        {{ $veiculo->ativo ? 'Ativo' : 'Inativo' }}
-                                    </span>
-                                </td>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Descrição</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Placa</th>
+                                <th scope="col" class="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Passageiros</th>
+                                <th scope="col" class="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @forelse ($veiculos as $veiculo)
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-5 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {{ $veiculo->descricao }}
+                                    </td>
+                                    <td class="px-6 py-5 whitespace-nowrap text-sm text-gray-600 uppercase font-semibold">
+                                        {{ $veiculo->placa }}
+                                    </td>
+                                    <td class="px-6 py-5 whitespace-nowrap text-center text-sm text-gray-600">
+                                        {{ $veiculo->numero_passageiros }}
+                                    </td>
+                                    <td class="px-6 py-5 whitespace-nowrap text-center">
+                                        <span class="px-3 py-1 inline-flex text-xs font-semibold rounded-full {{ $veiculo->ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                            {{ $veiculo->ativo ? 'Ativo' : 'Inativo' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-5 whitespace-nowrap text-center text-sm font-medium">
+                                        <div class="flex items-center justify-center gap-3">
+                                            <a href="{{ route('veiculos.show', $veiculo) }}" class="text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-md transition-colors text-xs font-semibold shadow-sm">
+                                                Ver
+                                            </a>
+                                            <a href="{{ route('veiculos.edit', $veiculo) }}" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-md transition-colors text-xs font-semibold shadow-sm">
+                                                Editar
+                                            </a>
+                                            <form action="{{ route('veiculos.destroy', $veiculo) }}" method="POST" class="inline-block" onsubmit="return confirm('Tem certeza que deseja remover este veículo?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md transition-colors text-xs font-semibold shadow-sm">
+                                                    Excluir
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-500">
+                                        Nenhum veículo cadastrado no sistema.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

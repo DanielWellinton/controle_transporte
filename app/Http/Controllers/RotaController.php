@@ -4,63 +4,120 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreRotaRequest;
 use App\Http\Requests\UpdateRotaRequest;
+use Illuminate\Http\Request;
 use App\Models\Rota;
+use App\Models\PontoDeParada;
 
 class RotaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $rotas = Rota::withCount('pontosDeParada')->get() ?? collect();
+
+        return view('rotas.index', compact('rotas'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('rotas.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreRotaRequest $request)
+    public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'descricao' => 'required|string|max:255',
+        ]);
+
+        $validated['ativo'] = $request->has('ativo');
+
+        $rota = Rota::create($validated);
+
+        return redirect()->route('rotas.edit', $rota)
+            ->with('success', 'Rota cadastrada com sucesso! Você já pode vincular os pontos de parada.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Rota $rota)
     {
-        //
+        $rota->load('pontosDeParada');
+
+        return view('rotas.show', compact('rota'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Rota $rota)
     {
-        //
+        $rota->load('pontosDeParada');
+
+        $pontosDisponiveis = PontoDeParada::where('ativo', true)
+            ->whereNotIn('id', $rota->pontosDeParada->pluck('id'))
+            ->get();
+
+        return view('rotas.edit', compact('rota', 'pontosDisponiveis'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateRotaRequest $request, Rota $rota)
+    public function update(Request $request, Rota $rota)
     {
-        //
+        $validated = $request->validate([
+            'descricao' => 'required|string|max:255',
+        ]);
+
+        $validated['ativo'] = $request->has('ativo');
+
+        $rota->update($validated);
+
+        return redirect()->route('rotas.edit', $rota)
+            ->with('success', 'Dados da rota atualizados com sucesso.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Rota $rota)
     {
-        //
+        $rota->delete();
+
+        return redirect()->route('rotas.index')
+            ->with('success', 'Rota removida com sucesso.');
+    }
+
+    // --- Métodos da Pivot (Gerenciados no Edit) ---
+
+    public function vincularPonto(Request $request, Rota $rota)
+    {
+        $validated = $request->validate([
+            'ponto_de_parada_id' => 'required|exists:ponto_de_paradas,id',
+        ]);
+
+        $proximaOrdem = ($rota->pontosDeParada()->max('rota_ponto_de_paradas.ordem') ?? 0) + 1;
+
+        $rota->pontosDeParada()->attach($validated['ponto_de_parada_id'], [
+            'ordem' => $proximaOrdem,
+            'ativo' => true,
+        ]);
+
+        return redirect()->route('rotas.edit', $rota)
+            ->with('success', 'Ponto de parada vinculado com sucesso.');
+    }
+
+    public function desvincularPonto(Rota $rota, PontoDeParada $pontoDeParada)
+    {
+        $rota->pontosDeParada()->detach($pontoDeParada->id);
+
+        return redirect()->route('rotas.edit', $rota)
+            ->with('success', 'Ponto de parada removido da rota.');
+    }
+
+    public function atualizarPontos(Request $request, Rota $rota)
+    {
+        $request->validate([
+            'pontos' => 'required|array',
+            'pontos.*.ordem' => 'required|integer|min:1',
+        ]);
+
+        foreach ($request->pontos as $pontoId => $dados) {
+            $rota->pontosDeParada()->updateExistingPivot($pontoId, [
+                'ordem' => $dados['ordem'],
+                'ativo' => isset($dados['ativo']),
+            ]);
+        }
+
+        return redirect()->route('rotas.edit', $rota)
+            ->with('success', 'Ordem e status dos pontos atualizados com sucesso.');
     }
 }

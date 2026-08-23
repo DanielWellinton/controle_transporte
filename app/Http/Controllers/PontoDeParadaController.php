@@ -4,63 +4,70 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePontoDeParadaRequest;
 use App\Http\Requests\UpdatePontoDeParadaRequest;
+use Illuminate\Http\Request;
 use App\Models\PontoDeParada;
 
 class PontoDeParadaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $pontoDeParada = PontoDeParada::all();
+
+        return view('ponto_de_paradas.index', compact('pontoDeParada'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('ponto_de_paradas.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StorePontoDeParadaRequest $request)
+    public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'descricao' => 'required|string|max:255',
+            'latitude'  => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        $validated['ativo'] = $request->has('ativo');
+
+        PontoDeParada::create($validated);
+
+        return redirect()->route('ponto_de_paradas.index')
+            ->with('success', 'Ponto de parada cadastrado com sucesso.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(PontoDeParada $pontoDeParada)
     {
-        //
+        return view('ponto_de_paradas.show', ['pontoDeParada' => $pontoDeParada]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(PontoDeParada $pontoDeParada)
     {
-        //
+        return view('ponto_de_paradas.edit', ['pontoDeParada' => $pontoDeParada]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdatePontoDeParadaRequest $request, PontoDeParada $pontoDeParada)
+    public function update(Request $request, PontoDeParada $pontoDeParada)
     {
-        //
+        $validated = $request->validate([
+            'descricao' => 'required|string|max:255',
+            'latitude'  => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        $validated['ativo'] = $request->has('ativo');
+
+        $pontoDeParada->update($validated);
+
+        return redirect()->route('ponto_de_paradas.index')
+            ->with('success', 'Ponto de parada atualizado com sucesso.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(PontoDeParada $pontoDeParada)
     {
-        //
+        $pontoDeParada->delete();
+
+        return redirect()->route('ponto_de_paradas.index')
+            ->with('success', 'Ponto de parada removido com sucesso.');
     }
 }

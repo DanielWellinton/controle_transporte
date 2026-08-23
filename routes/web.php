@@ -2,9 +2,9 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MotoristaController;
-// use App\Http\Controllers\VeiculoController;
-// use App\Http\Controllers\PontoDeParadaController;
-// use App\Http\Controllers\RotaController;
+use App\Http\Controllers\VeiculoController;
+use App\Http\Controllers\PontoDeParadaController;
+use App\Http\Controllers\RotaController;
 // use App\Http\Controllers\ViagemController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,9 +23,12 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::resource('motoristas', MotoristaController::class);
-// Route::resource('veiculos', VeiculoController::class);
-// Route::resource('pontos-de-parada', PontoDeParadaController::class);
-// Route::resource('rotas', RotaController::class);
+Route::resource('veiculos', VeiculoController::class);
+Route::resource('ponto_de_paradas', PontoDeParadaController::class);
+Route::resource('rotas', RotaController::class);
+Route::post('rotas/{rota}/pontos', [RotaController::class, 'vincularPonto'])->name('rotas.pontos.store');
+Route::put('rotas/{rota}/pontos', [RotaController::class, 'atualizarPontos'])->name('rotas.pontos.update');
+Route::delete('rotas/{rota}/pontos/{pontoDeParada}', [RotaController::class, 'desvincularPonto'])->name('rotas.pontos.destroy');
 // Route::resource('viagens', ViagemController::class);
 
 require __DIR__.'/auth.php';
