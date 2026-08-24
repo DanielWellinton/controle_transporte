@@ -73,7 +73,7 @@
                 </form>
             </div>
 
-            <!-- Prepara os pontos mapeados sem causar erro de sintaxe no Blade -->
+            <!-- Prepara a coleção de pontos -->
             @php
                 $pontosMapeados = $rota->pontosDeParada
                     ->filter(function($ponto) {
@@ -108,7 +108,13 @@
 
             <!-- Form: Reordenar / Alterar Status / Desvincular Pontos -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Gerenciar Pontos da Rota</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Gerenciar Pontos da Rota</h3>
+                    <span class="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full border border-gray-200 flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg>
+                        Arraste as linhas para reordenar
+                    </span>
+                </div>
 
                 @if($rota->pontosDeParada->count() > 0)
                 <!-- Formulário invisível apenas para a atualização em massa (PUT) -->
@@ -120,41 +126,51 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th scope="col" class="w-10 px-3 py-3"></th>
                             <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Ordem</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Descrição</th>
                             <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Ativo na Rota</th>
                             <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach ($rota->pontosDeParada as $ponto)
-                        <tr>
+                    <tbody id="sortable-pontos" class="bg-white divide-y divide-gray-200">
+                        @foreach ($rota->pontosDeParada->sortBy('pivot.ordem') as $ponto)
+                        <tr 
+                            data-ponto-id="{{ $ponto->id }}"
+                            data-descricao="{{ $ponto->descricao }}"
+                            data-lat="{{ $ponto->latitude }}"
+                            data-lng="{{ $ponto->longitude }}"
+                            class="hover:bg-gray-50 transition-colors cursor-grab active:cursor-grabbing"
+                        >
+                            <td class="px-3 py-4 text-center drag-handle text-gray-400 hover:text-gray-600">
+                                <svg class="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+                                </svg>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <!-- O atributo form="form-atualizar-pontos" vincula este input ao formulário do PUT -->
+                                <!-- Campo Readonly: envia o valor no submit mas impede edição manual -->
                                 <input
                                     type="number"
                                     form="form-atualizar-pontos"
                                     name="pontos[{{ $ponto->id }}][ordem]"
                                     value="{{ $ponto->pivot->ordem }}"
-                                    min="1"
-                                    class="w-16 text-center border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm"
-                                    required>
+                                    readonly
+                                    tabindex="-1"
+                                    class="input-ordem w-12 text-center bg-gray-100 border-gray-200 text-gray-600 font-semibold rounded-md shadow-inner text-sm select-none cursor-not-allowed focus:ring-0 focus:border-gray-200">
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 select-none">
                                 {{ $ponto->descricao }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <!-- O atributo form="form-atualizar-pontos" vincula este checkbox ao formulário do PUT -->
                                 <input
                                     type="checkbox"
                                     form="form-atualizar-pontos"
                                     name="pontos[{{ $ponto->id }}][ativo]"
                                     value="1"
-                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                    class="input-ativo rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 cursor-pointer"
                                     {{ $ponto->pivot->ativo ? 'checked' : '' }}>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                <!-- Formulário DELETE completamente independente -->
                                 <form action="{{ route('rotas.pontos.destroy', [$rota, $ponto]) }}" method="POST" class="inline-block" onsubmit="return confirm('Deseja desvincular este ponto da rota?');">
                                     @csrf
                                     @method('DELETE')
@@ -169,7 +185,6 @@
                 </table>
 
                 <div class="flex justify-end mt-4">
-                    <!-- Botão de submit apontando para o formulário PUT -->
                     <x-primary-button form="form-atualizar-pontos">
                         {{ __('Salvar Ordem e Status dos Pontos') }}
                     </x-primary-button>
@@ -186,31 +201,68 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+    <!-- SortableJS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const mapElement = document.getElementById('map');
             const distanciaInfo = document.getElementById('distancia-info');
+            const tbody = document.getElementById('sortable-pontos');
             if (!mapElement) return;
-
-            // Carrega os pontos ativos e ordena pela coluna pivot 'ordem'
-            let pontos = JSON.parse(mapElement.dataset.pontos || '[]');
-            pontos.sort((a, b) => a.ordem - b.ordem);
 
             const defaultLat = -23.550520;
             const defaultLng = -46.633309;
 
-            const map = L.map('map').setView(
-                pontos.length > 0 ? [pontos[0].lat, pontos[0].lng] : [defaultLat, defaultLng], 
-                13
-            );
-
+            // Inicializa Mapa
+            const map = L.map('map').setView([defaultLat, defaultLng], 13);
             L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; OpenStreetMap'
             }).addTo(map);
 
-            if (pontos.length > 0) {
-                // Adiciona Marcadores Numerados
+            let currentMarkers = [];
+            let currentPolyline = null;
+
+            // Extrai pontos ativos na tabela em ordem visual
+            function getPontosDoDOM() {
+                if (!tbody) return [];
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                const pontos = [];
+
+                rows.forEach((row, index) => {
+                    const ativoInput = row.querySelector('.input-ativo');
+                    if (ativoInput && ativoInput.checked) {
+                        pontos.push({
+                            id: row.dataset.pontoId,
+                            descricao: row.dataset.descricao,
+                            lat: parseFloat(row.dataset.lat),
+                            lng: parseFloat(row.dataset.lng),
+                            ordem: index + 1
+                        });
+                    }
+                });
+
+                return pontos;
+            }
+
+            // Redesenha Marcadores e Polinha (OSRM)
+            function renderizarRota() {
+                const pontos = getPontosDoDOM();
+
+                currentMarkers.forEach(m => map.removeLayer(m));
+                currentMarkers = [];
+                if (currentPolyline) {
+                    map.removeLayer(currentPolyline);
+                    currentPolyline = null;
+                }
+
+                if (distanciaInfo) {
+                    distanciaInfo.classList.add('hidden');
+                }
+
+                if (pontos.length === 0) return;
+
                 pontos.forEach((ponto, index) => {
                     const customIcon = L.divIcon({
                         className: 'custom-div-icon',
@@ -219,12 +271,13 @@
                         iconAnchor: [14, 14]
                     });
 
-                    L.marker([ponto.lat, ponto.lng], { icon: customIcon })
+                    const marker = L.marker([ponto.lat, ponto.lng], { icon: customIcon })
                         .addTo(map)
                         .bindPopup(`<b>Parada ${index + 1}: ${ponto.descricao}</b>`);
+
+                    currentMarkers.push(marker);
                 });
 
-                // Se houver 2 ou mais pontos, busca o trajeto pelas RODOVIAS via OSRM API
                 if (pontos.length >= 2) {
                     const coordinatesStr = pontos.map(p => `${p.lng},${p.lat}`).join(';');
                     const url = `https://router.project-osrm.org/route/v1/driving/${coordinatesStr}?overview=full&geometries=geojson`;
@@ -234,21 +287,16 @@
                         .then(data => {
                             if (data.routes && data.routes.length > 0) {
                                 const route = data.routes[0];
-
-                                // Converte o formato GeoJSON [lng, lat] para o Leaflet [lat, lng]
                                 const routeCoordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
 
-                                // Desenha a linha seguindo as rodovias
-                                const polyline = L.polyline(routeCoordinates, {
+                                currentPolyline = L.polyline(routeCoordinates, {
                                     color: '#4f46e5',
                                     weight: 5,
                                     opacity: 0.8
                                 }).addTo(map);
 
-                                // Ajusta o zoom do mapa para o trajeto
-                                map.fitBounds(polyline.getBounds(), { padding: [30, 30] });
+                                map.fitBounds(currentPolyline.getBounds(), { padding: [30, 30] });
 
-                                // Exibe a distância total calculada pelas rodovias
                                 if (distanciaInfo) {
                                     const distanciaKm = (route.distance / 1000).toFixed(1);
                                     distanciaInfo.textContent = `Distância Total: ${distanciaKm} km`;
@@ -256,17 +304,46 @@
                                 }
                             }
                         })
-                        .catch(err => {
-                            console.error("Erro ao carregar rota OSRM:", err);
-                        });
+                        .catch(err => console.error("Erro ao carregar rota OSRM:", err));
                 } else {
                     map.setView([pontos[0].lat, pontos[0].lng], 15);
                 }
             }
 
-            setTimeout(function () {
-                map.invalidateSize();
-            }, 200);
+            // Atualiza a numeração sequencial dos inputs readonly
+            function atualizarInputsOrdem() {
+                if (!tbody) return;
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach((row, index) => {
+                    const inputOrdem = row.querySelector('.input-ordem');
+                    if (inputOrdem) {
+                        inputOrdem.value = index + 1;
+                    }
+                });
+            }
+
+            renderizarRota();
+
+            // Configuração do SortableJS
+            if (tbody) {
+                Sortable.create(tbody, {
+                    handle: '.drag-handle',
+                    animation: 150,
+                    ghostClass: 'bg-indigo-50',
+                    onEnd: function () {
+                        atualizarInputsOrdem();
+                        renderizarRota();
+                    }
+                });
+
+                tbody.addEventListener('change', function (e) {
+                    if (e.target.classList.contains('input-ativo')) {
+                        renderizarRota();
+                    }
+                });
+            }
+
+            setTimeout(() => map.invalidateSize(), 200);
         });
     </script>
 </x-app-layout>
