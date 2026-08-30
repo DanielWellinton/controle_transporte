@@ -7,6 +7,7 @@ use App\Http\Controllers\VeiculoController;
 use App\Http\Controllers\PontoDeParadaController;
 use App\Http\Controllers\RotaController;
 use App\Http\Controllers\ViagemController;
+use App\Http\Controllers\LeitorQrController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -32,11 +33,12 @@ Route::put('rotas/{rota}/pontos', [RotaController::class, 'atualizarPontos'])->n
 Route::delete('rotas/{rota}/pontos/{pontoDeParada}', [RotaController::class, 'desvincularPonto'])->name('rotas.pontos.destroy');
 Route::resource('viagems', ViagemController::class);
 
-Route::get('/passageiros', [PassageiroController::class, 'index']);
-Route::get('/passageiros/viagens/{viagem}', [PassageiroController::class, 'exibirViagem'])->name('passageiros.viagem.exibir');
-Route::post('/passageiros/viagem/{viagem}/pontos', [PassageiroController::class, 'selecionarPontos'])->name('passageiros.selecionar-pontos');
-Route::delete('/passageiros/viagem/{viagem}/cancelar', [PassageiroController::class, 'cancelarReserva']);
-Route::get('/passageiros/scanner', fn() => view('passageiros.scanner'));
-Route::get('/viagens/checkin/{codigo_qr}', [PassageiroController::class, 'registrarPresencaViaQr'])->name('viagens.checkin');
+Route::get('/passageiros', [PassageiroController::class, 'index'])->name('passageiros.index');
+Route::get('/passageiros/viagens/{viagem}', [PassageiroController::class, 'selecionarPontos'])->name('passageiros.selecionar-pontos');
+Route::post('/passageiros/viagens/{viagem}', [PassageiroController::class, 'salvarPontos'])->name('passageiros.salvar-pontos');
+Route::delete('/passageiros/viagens/{viagem}/cancelar', [PassageiroController::class, 'cancelar'])->name('passageiros.cancelar');
+
+Route::get('/passageiros/scanner', [LeitorQrController::class, 'exibirScanner'])->name('passageiros.scanner');
+Route::post('/passageiros/scanner/validar', [LeitorQrController::class, 'validarQrCode'])->name('passageiros.scanner.validar');
 
 require __DIR__.'/auth.php';

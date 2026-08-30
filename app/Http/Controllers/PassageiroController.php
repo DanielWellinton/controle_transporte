@@ -10,129 +10,70 @@ use App\Models\Viagem;
 use App\Models\User;
 use App\Models\PontoDeParada;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class PassageiroController extends Controller
 {
     public function index()
     {
-        $usuarioId = Auth::id();
-
-        $viagensAtivas = Viagem::with(['rota.pontosDeParada', 'motorista.usuario', 'veiculo'])
+        $viagens = Viagem::with(['rota.pontosDeParada', 'veiculo', 'motorista.usuario', 'passageiros'])
             ->where('ativo', true)
-            ->whereNull('data_hora_chegada')
+            ->orderBy('data_hora_saida', 'asc')
             ->get();
 
-        $minhasViagens = Passageiro::with(['viagem.rota.pontosDeParada', 'pontoSaida', 'pontoChegada'])
-            ->where('usuario_id', $usuarioId)
-            ->whereHas('viagem', fn($q) => $q->whereNull('data_hora_chegada'))
-            ->get();
-
-        return view('passageiros.dashboard', compact('viagensAtivas', 'minhasViagens'));
+        return view('passageiros.index', compact('viagens'));
     }
 
-    // Selecionar ou Atualizar pontos de parada
-    public function selecionarPontos(Request $request, Viagem $viagem)
+    // Exibe o mapa para a viagem selecionada
+    public function selecionarPontos(Viagem $viagem)
     {
-        $request->validate([
-            'ponto_de_parada_saida_id' => 'required|exists:pontos_de_parada,id',
-            'ponto_de_parada_chegada_id' => 'required|exists:pontos_de_parada,id|different:ponto_de_parada_saida_id',
-        ], [
-            'ponto_de_parada_chegada_id.different' => 'O ponto de desembarque deve ser diferente do ponto de embarque.',
-        ]);
-    
-        $viagem = Viagem::with('rota.pontosDeParada')->findOrFail($viagem->id);
-    
-        // Obtém o registro pivot dos pontos selecionados para verificar a coluna 'ordem'
-        $pontoSaida = $viagem->rota->pontosDeParada->firstWhere('id', $request->ponto_de_parada_saida_id);
-        $pontoChegada = $viagem->rota->pontosDeParada->firstWhere('id', $request->ponto_de_parada_chegada_id);
-    
-        if (!$pontoSaida || !$pontoChegada) {
-            return back()->withErrors(['msg' => 'Pontos de parada inválidos para esta viagem.']);
-        }
-    
-        $ordemSaida = $pontoSaida->pivot->ordem ?? 0;
-        $ordemChegada = $pontoChegada->pivot->ordem ?? 0;
-    
-        // VALIDACAO: O desembarque precisa ser posterior ao embarque
-        if ($ordemChegada <= $ordemSaida) {
-            return back()->withInput()->withErrors([
-                'ponto_de_parada_chegada_id' => 'O ponto de desembarque deve ser posterior ao ponto de embarque. O veículo não retorna na rota.'
-            ]);
-        }
-    
-        // Salva a reserva do passageiro...
-        // ...
-    
-        return redirect()->back()->with('success', 'Pontos de embarque e desembarque selecionados com sucesso!');
-        }
+        $viagem->load(['rota.pontosDeParada', 'veiculo', 'motorista.usuario']);
 
-    // Cancelar/Desistir da reserva na viagem
-    public function cancelarReserva(Viagem $viagem)
-    {
         $passageiro = Passageiro::where('usuario_id', Auth::id())
             ->where('viagem_id', $viagem->id)
             ->first();
 
-        if (!$passageiro) {
-            return redirect()->route('passageiros.dashboard')
-                ->with('error', 'Reserva não encontrada.');
-        }
-
-        // Impede desistência caso o passageiro já tenha embarcado
-        if ($passageiro->status === 'presente') {
-            return redirect()->route('passageiros.dashboard')
-                ->with('error', 'Você já embarcou nesta viagem e não pode desistir.');
-        }
-
-        $passageiro->delete();
-
-        return redirect()->route('passageiros.dashboard')
-            ->with('success', 'Sua reserva foi cancelada com sucesso.');
+        return view('passageiros.selecionar-pontos', compact('viagem', 'passageiro'));
     }
 
-    public function registrarPresencaViaQr($codigo_qr)
+    public function salvarPontos(Request $request, Viagem $viagem)
     {
-        $viagem = Viagem::where('codigo_qr', $codigo_qr)->where('ativo', true)->firstOrFail();
-
-        $passageiro = Passageiro::where('viagem_id', $viagem->id)
-            ->where('usuario_id', Auth::id())
-            ->first();
-
-        if (!$passageiro) {
-            return redirect()->route('passageiros.dashboard')
-                ->with('error', 'Você não selecionou os pontos de embarque para esta viagem.');
-        }
-
-        if ($passageiro->status === 'presente') {
-            return redirect()->route('passageiros.dashboard')
-                ->with('info', 'Sua presença já havia sido confirmada anteriormente.');
-        }
-
-        $passageiro->update([
-            'data_hora_saida' => now(),
-            'status'          => 'presente',
+        $request->validate([
+            'ponto_de_parada_saida_id' => [
+                'required',
+                Rule::exists(PontoDeParada::class, 'id')
+            ],
+            'ponto_de_parada_chegada_id' => [
+                'required',
+                'different:ponto_de_parada_saida_id',
+                Rule::exists(PontoDeParada::class, 'id')
+            ],
         ]);
 
-        return redirect()->route('passageiros.dashboard')
-            ->with('success', 'Presença confirmada no veículo com sucesso!');
+        // Atualiza se existir ou cria um novo registro
+        Passageiro::updateOrCreate(
+            [
+                'usuario_id' => Auth::id(),
+                'viagem_id'  => $viagem->id,
+            ],
+            [
+                'ponto_de_parada_saida_id'   => $request->ponto_de_parada_saida_id,
+                'ponto_de_parada_chegada_id' => $request->ponto_de_parada_chegada_id,
+                'data_hora_saida'            => now(),
+            ]
+        );
+
+        return redirect()->route('passageiros.index')->with('success', 'Sua vaga foi confirmada nesta viagem!');
     }
 
-    // Adicione este método no PassageiroController
-    public function exibirViagem(Viagem $viagem)
+    // Altere a assinatura para receber (Viagem $viagem)
+    public function cancelar(Viagem $viagem)
     {
-        // Garante que a viagem esteja ativa
-        if (!$viagem->ativo || $viagem->data_hora_chegada !== null) {
-            return redirect()->route('passageiros.dashboard')
-                ->with('error', 'Esta viagem não está mais disponível.');
-        }
-
-        $viagem->load(['rota.pontosDeParada', 'motorista.usuario', 'veiculo']);
-
-        // Busca se o passageiro já tem uma reserva nessa viagem para pré-selecionar os pontos
-        $reserva = Passageiro::where('usuario_id', Auth::id())
+        // Deleta o registro do usuário autenticado para esta viagem específica
+        Passageiro::where('usuario_id', Auth::id())
             ->where('viagem_id', $viagem->id)
-            ->first();
+            ->delete();
 
-        return view('passageiros.viagem-detalhes', compact('viagem', 'reserva'));
+        return redirect()->route('passageiros.index')->with('success', 'Sua participação foi cancelada.');
     }
 }

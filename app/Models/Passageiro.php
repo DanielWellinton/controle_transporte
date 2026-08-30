@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Passageiro extends Model
 {
+    protected $primaryKey = null;
+    public $incrementing = false;
+    
     protected $fillable = [
         'usuario_id',
         'viagem_id',
