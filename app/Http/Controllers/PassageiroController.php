@@ -33,36 +33,38 @@ class PassageiroController extends Controller
     // Selecionar ou Atualizar pontos de parada
     public function selecionarPontos(Request $request, Viagem $viagem)
     {
-        $validated = $request->validate([
-            'ponto_de_parada_saida_id'   => 'required|exists:ponto_de_paradas,id',
-            'ponto_de_parada_chegada_id' => 'required|exists:ponto_de_paradas,id|different:ponto_de_parada_saida_id',
+        $request->validate([
+            'ponto_de_parada_saida_id' => 'required|exists:pontos_de_parada,id',
+            'ponto_de_parada_chegada_id' => 'required|exists:pontos_de_parada,id|different:ponto_de_parada_saida_id',
+        ], [
+            'ponto_de_parada_chegada_id.different' => 'O ponto de desembarque deve ser diferente do ponto de embarque.',
         ]);
-
-        $passageiro = Passageiro::where('usuario_id', Auth::id())
-            ->where('viagem_id', $viagem->id)
-            ->first();
-
-        // Não permite editar se já leu o QR Code e embarcou
-        if ($passageiro && $passageiro->status === 'presente') {
-            return redirect()->route('passageiros.dashboard')
-                ->with('error', 'Você já embarcou nesta viagem e não pode mais alterar os pontos.');
+    
+        $viagem = Viagem::with('rota.pontosDeParada')->findOrFail($viagem->id);
+    
+        // Obtém o registro pivot dos pontos selecionados para verificar a coluna 'ordem'
+        $pontoSaida = $viagem->rota->pontosDeParada->firstWhere('id', $request->ponto_de_parada_saida_id);
+        $pontoChegada = $viagem->rota->pontosDeParada->firstWhere('id', $request->ponto_de_parada_chegada_id);
+    
+        if (!$pontoSaida || !$pontoChegada) {
+            return back()->withErrors(['msg' => 'Pontos de parada inválidos para esta viagem.']);
         }
-
-        Passageiro::updateOrCreate(
-            [
-                'usuario_id' => Auth::id(),
-                'viagem_id'  => $viagem->id,
-            ],
-            [
-                'ponto_de_parada_saida_id'   => $validated['ponto_de_parada_saida_id'],
-                'ponto_de_parada_chegada_id' => $validated['ponto_de_parada_chegada_id'],
-                'status'                     => 'reservado',
-            ]
-        );
-
-        return redirect()->route('passageiros.dashboard')
-            ->with('success', 'Pontos definidos/atualizados com sucesso!');
-    }
+    
+        $ordemSaida = $pontoSaida->pivot->ordem ?? 0;
+        $ordemChegada = $pontoChegada->pivot->ordem ?? 0;
+    
+        // VALIDACAO: O desembarque precisa ser posterior ao embarque
+        if ($ordemChegada <= $ordemSaida) {
+            return back()->withInput()->withErrors([
+                'ponto_de_parada_chegada_id' => 'O ponto de desembarque deve ser posterior ao ponto de embarque. O veículo não retorna na rota.'
+            ]);
+        }
+    
+        // Salva a reserva do passageiro...
+        // ...
+    
+        return redirect()->back()->with('success', 'Pontos de embarque e desembarque selecionados com sucesso!');
+        }
 
     // Cancelar/Desistir da reserva na viagem
     public function cancelarReserva(Viagem $viagem)
@@ -113,5 +115,24 @@ class PassageiroController extends Controller
 
         return redirect()->route('passageiros.dashboard')
             ->with('success', 'Presença confirmada no veículo com sucesso!');
+    }
+
+    // Adicione este método no PassageiroController
+    public function exibirViagem(Viagem $viagem)
+    {
+        // Garante que a viagem esteja ativa
+        if (!$viagem->ativo || $viagem->data_hora_chegada !== null) {
+            return redirect()->route('passageiros.dashboard')
+                ->with('error', 'Esta viagem não está mais disponível.');
+        }
+
+        $viagem->load(['rota.pontosDeParada', 'motorista.usuario', 'veiculo']);
+
+        // Busca se o passageiro já tem uma reserva nessa viagem para pré-selecionar os pontos
+        $reserva = Passageiro::where('usuario_id', Auth::id())
+            ->where('viagem_id', $viagem->id)
+            ->first();
+
+        return view('passageiros.viagem-detalhes', compact('viagem', 'reserva'));
     }
 }

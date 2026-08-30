@@ -5,8 +5,8 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
+    <div class="py-8 bg-gray-100 min-h-screen">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             @if(session('success'))
                 <div class="p-4 bg-green-100 border border-green-200 text-green-700 rounded-lg">
@@ -20,138 +20,87 @@
                 </div>
             @endif
 
-            <!-- Leitor de QR Code Rápido -->
-            <div class="bg-indigo-900 text-white p-6 rounded-xl shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
-                <div>
-                    <h3 class="text-lg font-bold">Já está no veículo?</h3>
-                    <p class="text-sm text-indigo-200">Escaneie o QR Code no veículo para confirmar seu embarque.</p>
-                </div>
-            </div>
-
-            <!-- Minhas Reservas Ativas -->
+            <!-- MINHAS RESERVAS ATIVAS -->
             @if($minhasViagens->count() > 0)
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Minhas Reservas</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        @foreach($minhasViagens as $reserva)
-                            <div class="border rounded-xl p-5 bg-gray-50 flex flex-col justify-between space-y-4">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <h4 class="font-bold text-gray-900 text-base">{{ $reserva->viagem->rota->descricao ?? 'Viagem' }}</h4>
-                                        <p class="text-xs text-gray-500">Motorista: {{ $reserva->viagem->motorista->usuario->name ?? 'N/A' }}</p>
-                                    </div>
-                                    @if($reserva->status === 'presente')
-                                        <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full border border-green-300">
-                                            Embarcado ({{ $reserva->data_hora_saida->format('H:i') }})
-                                        </span>
-                                    @else
-                                        <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full border border-yellow-300">
-                                            Aguardando QR Code
-                                        </span>
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Sua Viagem Agendada</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @foreach($minhasViagens as $minha)
+                            <div class="border border-indigo-200 bg-indigo-50/50 p-4 rounded-lg flex justify-between items-center">
+                                <div>
+                                    <span class="text-xs font-bold uppercase text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">
+                                        Status: {{ ucfirst($minha->status) }}
+                                    </span>
+                                    <h4 class="font-bold text-gray-800 mt-2">{{ $minha->viagem->rota->descricao ?? 'Viagem #'.$minha->viagem_id }}</h4>
+                                    <p class="text-xs text-gray-600 mt-1">
+                                        <strong>Embarque:</strong> {{ $minha->pontoSaida->descricao ?? 'Não definido' }}
+                                    </p>
+                                    <p class="text-xs text-gray-600">
+                                        <strong>Desembarque:</strong> {{ $minha->pontoChegada->descricao ?? 'Não definido' }}
+                                    </p>
+                                </div>
+                                <div class="flex flex-col space-y-2">
+                                    <a href="{{ route('passageiros.viagem.exibir', $minha->viagem_id) }}" 
+                                       class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded text-center">
+                                        Alterar Pontos
+                                    </a>
+                                    @if($minha->status !== 'presente')
+                                        <form action="{{ route('passageiros.cancelarReserva', $minha->viagem_id) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" onclick="return confirm('Deseja realmente cancelar sua reserva?')" 
+                                                    class="w-full px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded">
+                                                Desistir
+                                            </button>
+                                        </form>
                                     @endif
                                 </div>
-
-                                <!-- Formulário para alterar os pontos caso não tenha embarcado -->
-                                @if($reserva->status !== 'presente')
-                                    <form action="{{ route('passageiros.selecionar-pontos', $reserva->viagem_id) }}" method="POST" class="space-y-3 bg-white p-3 rounded-lg border">
-                                        @csrf
-                                        <p class="text-xs font-bold text-gray-700">Alterar meus pontos de parada:</p>
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                            <div>
-                                                <label class="block text-xs text-gray-500">Embarque</label>
-                                                <select name="ponto_de_parada_saida_id" required class="mt-1 block w-full text-xs rounded-md border-gray-300">
-                                                    @foreach($reserva->viagem->rota->pontosDeParada as $ponto)
-                                                        <option value="{{ $ponto->id }}" {{ $reserva->ponto_de_parada_saida_id == $ponto->id ? 'selected' : '' }}>
-                                                            {{ $ponto->pivot->ordem }}º - {{ $ponto->descricao }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-
-                                            <div>
-                                                <label class="block text-xs text-gray-500">Desembarque</label>
-                                                <select name="ponto_de_parada_chegada_id" required class="mt-1 block w-full text-xs rounded-md border-gray-300">
-                                                    @foreach($reserva->viagem->rota->pontosDeParada as $ponto)
-                                                        <option value="{{ $ponto->id }}" {{ $reserva->ponto_de_parada_chegada_id == $ponto->id ? 'selected' : '' }}>
-                                                            {{ $ponto->pivot->ordem }}º - {{ $ponto->descricao }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="flex justify-between items-center pt-2">
-                                            <button type="submit" class="px-3 py-1.5 bg-gray-800 text-white text-xs font-semibold rounded hover:bg-gray-700">
-                                                Salvar Alterações
-                                            </button>
-                                        </div>
-                                    </form>
-
-                                    <!-- Botão de Desistência -->
-                                    <form action="{{ route('passageiros.cancelar-reserva', $reserva->viagem_id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja desistir desta viagem?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="w-full py-2 bg-red-50 text-red-600 border border-red-200 text-xs font-bold rounded-lg hover:bg-red-100 transition">
-                                            🚫 Desistir / Cancelar Reserva
-                                        </button>
-                                    </form>
-                                @else
-                                    <div class="text-xs text-gray-600 bg-gray-100 p-3 rounded-lg">
-                                        <p><strong>Embarque:</strong> {{ $reserva->pontoSaida->descricao ?? 'N/A' }}</p>
-                                        <p><strong>Desembarque:</strong> {{ $reserva->pontoChegada->descricao ?? 'N/A' }}</p>
-                                    </div>
-                                @endif
                             </div>
                         @endforeach
                     </div>
                 </div>
             @endif
 
-            <!-- Listagem de Viagens Disponíveis (que o passageiro ainda não reservou) -->
-            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Outras Viagens Ativas</h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    @php
-                        $reservasIds = $minhasViagens->pluck('viagem_id')->toArray();
-                    @endphp
-
-                    @forelse($viagensAtivas->whereNotIn('id', $reservasIds) as $viagem)
-                        <div class="border rounded-xl p-5 space-y-4 hover:border-indigo-300 transition">
-                            <div>
-                                <h4 class="font-bold text-gray-900 text-lg">{{ $viagem->rota->descricao ?? 'Rota sem nome' }}</h4>
-                                <p class="text-xs text-gray-500">Motorista: {{ $viagem->motorista->usuario->name ?? 'N/A' }} | Veículo: {{ $viagem->veiculo->placa ?? '' }}</p>
+            <!-- LISTA DE VIAGENS DISPONÍVEIS -->
+            <div>
+                <h3 class="text-lg font-bold text-gray-700 mb-4">Escolha uma Viagem para Embarcar</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @forelse($viagensAtivas as $viagem)
+                        <!-- Link envelopando o card inteiro -->
+                        <a href="{{ route('passageiros.viagem.exibir', $viagem->id) }}" 
+                           class="block bg-white rounded-xl shadow-sm hover:shadow-md transition border-2 border-transparent hover:border-indigo-500 p-5 group">
+                            
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="px-2.5 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full uppercase">
+                                    Em Aberto
+                                </span>
+                                <span class="text-xs font-semibold text-gray-500">
+                                    {{ $viagem->veiculo->modelo ?? 'Veículo' }} - {{ $viagem->veiculo->placa ?? '' }}
+                                </span>
                             </div>
 
-                            <form action="{{ route('passageiros.selecionar-pontos', $viagem) }}" method="POST" class="space-y-3">
-                                @csrf
-                                <div>
-                                    <label class="block text-xs font-semibold uppercase text-gray-500">Ponto de Embarque</label>
-                                    <select name="ponto_de_parada_saida_id" required class="mt-1 block w-full text-sm rounded-md border-gray-300">
-                                        <option value="">Escolha onde vai subir...</option>
-                                        @foreach($viagem->rota->pontosDeParada as $ponto)
-                                            <option value="{{ $ponto->id }}">{{ $ponto->pivot->ordem }}º - {{ $ponto->descricao }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                            <h4 class="text-base font-bold text-gray-900 group-hover:text-indigo-600 transition">
+                                {{ $viagem->rota->descricao ?? 'Rota #'.$viagem->rota_id }}
+                            </h4>
 
-                                <div>
-                                    <label class="block text-xs font-semibold uppercase text-gray-500">Ponto de Desembarque</label>
-                                    <select name="ponto_de_parada_chegada_id" required class="mt-1 block w-full text-sm rounded-md border-gray-300">
-                                        <option value="">Escolha onde vai descer...</option>
-                                        @foreach($viagem->rota->pontosDeParada as $ponto)
-                                            <option value="{{ $ponto->id }}">{{ $ponto->pivot->ordem }}º - {{ $ponto->descricao }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                👨‍✈️ Motorista: {{ $viagem->motorista->usuario->name ?? 'Não atribuído' }}
+                            </p>
 
-                                <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-md transition">
-                                    Confirmar Embarque Nesta Viagem
-                                </button>
-                            </form>
-                        </div>
+                            <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+                                <span class="text-xs font-medium text-gray-500">
+                                    {{ $viagem->rota->pontosDeParada->count() }} pontos de parada
+                                </span>
+                                <span class="text-xs font-bold text-indigo-600 group-hover:translate-x-1 transition-transform flex items-center">
+                                    Ver no Mapa &rarr;
+                                </span>
+                            </div>
+                        </a>
                     @empty
-                        <p class="text-sm text-gray-500 col-span-2">Nenhuma outra viagem disponível para reserva no momento.</p>
+                        <div class="col-span-full bg-white rounded-xl p-8 text-center text-gray-500 shadow-sm">
+                            Nenhuma viagem ativa encontrada no momento.
+                        </div>
                     @endforelse
                 </div>
             </div>

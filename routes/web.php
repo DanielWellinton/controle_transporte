@@ -31,7 +31,9 @@ Route::post('rotas/{rota}/pontos', [RotaController::class, 'vincularPonto'])->na
 Route::put('rotas/{rota}/pontos', [RotaController::class, 'atualizarPontos'])->name('rotas.pontos.update');
 Route::delete('rotas/{rota}/pontos/{pontoDeParada}', [RotaController::class, 'desvincularPonto'])->name('rotas.pontos.destroy');
 Route::resource('viagems', ViagemController::class);
+
 Route::get('/passageiros', [PassageiroController::class, 'index']);
+Route::get('/passageiros/viagens/{viagem}', [PassageiroController::class, 'exibirViagem'])->name('passageiros.viagem.exibir');
 Route::post('/passageiros/viagem/{viagem}/pontos', [PassageiroController::class, 'selecionarPontos'])->name('passageiros.selecionar-pontos');
 Route::delete('/passageiros/viagem/{viagem}/cancelar', [PassageiroController::class, 'cancelarReserva']);
 Route::get('/passageiros/scanner', fn() => view('passageiros.scanner'));
