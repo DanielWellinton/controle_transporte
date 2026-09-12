@@ -25,5 +25,6 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
-/docker/nginx/certs/*.pem
+/docker/nginx/certs/*
+!/docker/nginx/certs/.gitkeep
 /docker/nginx/default.conf
