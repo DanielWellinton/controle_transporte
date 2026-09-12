@@ -19,17 +19,24 @@ class LeitorQrController extends Controller
         $request->validate([
             'codigo_qr' => 'required|string',
         ]);
-
-        // 1. Busca a viagem pelo QR Code lido
-        $viagem = Viagem::where('codigo_qr', $request->codigo_qr)->first();
-
+    
+        $codigoQr = $request->codigo_qr;
+    
+        // Se o valor for uma URL, extrai o UUID do final da URL
+        if (filter_var($codigoQr, FILTER_VALIDATE_URL)) {
+            $codigoQr = basename(parse_url($codigoQr, PHP_URL_PATH));
+        }
+    
+        // Busca a viagem pelo QR Code
+        $viagem = Viagem::where('codigo_qr', $codigoQr)->first();
+    
         if (!$viagem) {
             return response()->json([
                 'success' => false,
                 'message' => 'QR Code inválido ou viagem não encontrada.'
             ], 404);
         }
-
+        
         if (!$viagem->ativo) {
             return response()->json([
                 'success' => false,
