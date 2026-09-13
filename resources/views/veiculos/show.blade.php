@@ -1,43 +1,91 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Detalhes do Veículo') }}
-        </h2>
-    </x-slot>
+@extends('layouts.admin')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <p class="text-sm font-semibold text-gray-500">Descrição:</p>
-                            <p class="text-lg font-bold text-gray-900">{{ $veiculo->descricao }}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-gray-500">Placa:</p>
-                            <p class="text-lg uppercase font-bold text-gray-900">{{ $veiculo->placa }}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-gray-500">Capacidade de Passageiros:</p>
-                            <p class="text-lg text-gray-900">{{ $veiculo->numero_passageiros }} assentos</p>
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-gray-500">Status:</p>
-                            <span class="mt-1 px-3 py-1 inline-flex text-xs font-semibold rounded-full {{ $veiculo->ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                {{ $veiculo->ativo ? 'Ativo' : 'Inativo' }}
-                            </span>
-                        </div>
-                    </div>
+@section('title', 'Detalhes do Veículo')
+@section('header_title', 'Detalhes do Veículo')
 
-                    <div class="flex items-center justify-end mt-8 gap-3">
-                        <a href="{{ route('veiculos.index') }}" class="text-gray-600 hover:text-gray-900 text-sm font-semibold">Voltar</a>
-                        <a href="{{ route('veiculos.edit', $veiculo) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded text-sm transition-colors shadow-sm">
-                            Editar
-                        </a>
-                    </div>
+@section('content')
+<div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Card Topo / Cabeçalho -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('veiculos.index') }}" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition">
+                    &larr; Voltar para Veículos
+                </a>
+                <h2 class="text-base font-bold text-slate-800">
+                    {{ $veiculo->descricao }}
+                </h2>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Especificações, placa e status operacional do veículo.</p>
+        </div>
+
+        <div class="flex items-center gap-3 self-start sm:self-auto">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold {{ $veiculo->ativo ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
+                <span class="w-1.5 h-1.5 rounded-full {{ $veiculo->ativo ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
+                {{ $veiculo->ativo ? 'Veículo Ativo' : 'Veículo Inativo' }}
+            </span>
+
+            <a href="{{ route('veiculos.edit', $veiculo) }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition shadow-md shadow-indigo-500/20 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span>Editar Veículo</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Informações do Veículo -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+        <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3">Informações Gerais</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Descrição</span>
+                <p class="text-sm font-bold text-slate-800">{{ $veiculo->descricao }}</p>
+            </div>
+
+            <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Placa</span>
+                <p class="text-sm font-mono font-bold text-slate-800 uppercase tracking-wide">{{ $veiculo->placa }}</p>
+            </div>
+
+            <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Capacidade de Passageiros</span>
+                <p class="text-sm font-bold text-slate-800">{{ $veiculo->numero_passageiros }} assentos</p>
+            </div>
+
+            <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Status Operacional</span>
+                <div class="mt-0.5">
+                    @if($veiculo->ativo)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Ativo
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                            Inativo
+                        </span>
+                    @endif
                 </div>
             </div>
         </div>
+
+        <!-- Botões do Rodapé -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <a href="{{ route('veiculos.index') }}" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition">
+                Voltar para Lista
+            </a>
+            <a href="{{ route('veiculos.edit', $veiculo) }}" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition shadow-md shadow-indigo-500/20 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span>Editar Veículo</span>
+            </a>
+        </div>
     </div>
-</x-app-layout>
+
+</div>
+@endsection

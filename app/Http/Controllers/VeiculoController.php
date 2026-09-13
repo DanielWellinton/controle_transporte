@@ -20,17 +20,9 @@ class VeiculoController extends Controller
         return view('veiculos.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreVeiculoRequest $request)
     {
-        $validated = $request->validate([
-            'descricao' => 'required|string|max:255',
-            'numero_passageiros' => 'required|integer|min:1',
-            'placa' => 'required|string|max:10|unique:veiculos,placa',
-        ]);
-
-        $validated['ativo'] = $request->has('ativo');
-
-        Veiculo::create($validated);
+        Veiculo::create($request->validated());
 
         return redirect()->route('veiculos.index')
             ->with('success', 'Veículo cadastrado com sucesso.');
@@ -46,17 +38,9 @@ class VeiculoController extends Controller
         return view('veiculos.edit', compact('veiculo'));
     }
 
-    public function update(Request $request, Veiculo $veiculo)
+    public function update(UpdateVeiculoRequest $request, Veiculo $veiculo)
     {
-        $validated = $request->validate([
-            'descricao' => 'required|string|max:255',
-            'numero_passageiros' => 'required|integer|min:1',
-            'placa' => 'required|string|max:10|unique:veiculos,placa,' . $veiculo->id,
-        ]);
-
-        $validated['ativo'] = $request->has('ativo');
-
-        $veiculo->update($validated);
+        $veiculo->update($request->validated());
 
         return redirect()->route('veiculos.index')
             ->with('success', 'Veículo atualizado com sucesso.');

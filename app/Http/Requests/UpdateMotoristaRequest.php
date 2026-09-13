@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateMotoristaRequest extends FormRequest
 {
@@ -23,7 +24,26 @@ class UpdateMotoristaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'usuario_id' => [
+                'required',
+                'exists:users,id',
+                Rule::unique('motoristas', 'usuario_id')->ignore($this->motorista),
+            ],
+            'cnh' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('motoristas', 'cnh')->ignore($this->motorista),
+            ],
+            'data_validade_cnh' => ['required', 'date'],
+            'ativo' => ['nullable', 'boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'ativo' => $this->has('ativo'),
+        ]);
     }
 }

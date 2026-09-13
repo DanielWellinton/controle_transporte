@@ -12,7 +12,7 @@ class StoreRotaRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +23,15 @@ class StoreRotaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'descricao' => ['required', 'string', 'max:255'],
+            'ativo'     => ['nullable', 'boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'ativo' => $this->has('ativo'),
+        ]);
     }
 }

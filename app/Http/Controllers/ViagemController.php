@@ -30,20 +30,9 @@ class ViagemController extends Controller
         return view('viagems.create', compact('rotas', 'motoristas', 'veiculos'));
     }
 
-    public function store(Request $request)
+    public function store(StoreViagemRequest $request)
     {
-        $validated = $request->validate([
-            'rota_id' => 'required|exists:rotas,id',
-            'motorista_id' => 'required|exists:motoristas,id',
-            'veiculo_id' => 'required|exists:veiculos,id',
-            'data_hora_saida' => 'required|date',
-            'data_hora_chegada' => 'nullable|date|after_or_equal:data_hora_saida',
-            'ativo' => 'nullable|boolean',
-        ]);
-
-        $validated['ativo'] = $request->has('ativo');
-
-        Viagem::create($validated);
+        Viagem::create($request->validated());
 
         return redirect()->route('viagems.index')
             ->with('success', 'Viagem agendada com sucesso!');
@@ -70,20 +59,9 @@ class ViagemController extends Controller
         return view('viagems.edit', compact('viagem', 'rotas', 'motoristas', 'veiculos'));
     }
 
-    public function update(Request $request, Viagem $viagem)
+    public function update(UpdateViagemRequest $request, Viagem $viagem)
     {
-        $validated = $request->validate([
-            'rota_id' => 'required|exists:rotas,id',
-            'motorista_id' => 'required|exists:motoristas,id',
-            'veiculo_id' => 'required|exists:veiculos,id',
-            'data_hora_saida' => 'required|date',
-            'data_hora_chegada' => 'nullable|date|after_or_equal:data_hora_saida',
-            'ativo' => 'nullable|boolean',
-        ]);
-
-        $validated['ativo'] = $request->has('ativo');
-
-        $viagem->update($validated);
+        $viagem->update($request->validated());
 
         return redirect()->route('viagems.index')
             ->with('success', 'Viagem atualizada com sucesso!');

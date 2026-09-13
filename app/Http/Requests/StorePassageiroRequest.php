@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\PontoDeParada;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StorePassageiroRequest extends FormRequest
 {
@@ -12,7 +14,7 @@ class StorePassageiroRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +25,15 @@ class StorePassageiroRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'ponto_de_parada_saida_id' => [
+                'required',
+                Rule::exists(PontoDeParada::class, 'id'),
+            ],
+            'ponto_de_parada_chegada_id' => [
+                'required',
+                'different:ponto_de_parada_saida_id',
+                Rule::exists(PontoDeParada::class, 'id'),
+            ],
         ];
     }
 }

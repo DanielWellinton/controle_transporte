@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateVeiculoRequest extends FormRequest
 {
@@ -12,7 +13,7 @@ class UpdateVeiculoRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +24,22 @@ class UpdateVeiculoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'descricao' => ['required', 'string', 'max:255'],
+            'numero_passageiros' => ['required', 'integer', 'min:1'],
+            'placa' => [
+                'required',
+                'string',
+                'max:10',
+                Rule::unique('veiculos', 'placa')->ignore($this->veiculo),
+            ],
+            'ativo' => ['nullable', 'boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'ativo' => $this->has('ativo'),
+        ]);
     }
 }

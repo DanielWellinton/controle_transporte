@@ -22,15 +22,9 @@ class RotaController extends Controller
         return view('rotas.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreRotaRequest $request)
     {
-        $validated = $request->validate([
-            'descricao' => 'required|string|max:255',
-        ]);
-
-        $validated['ativo'] = $request->has('ativo');
-
-        $rota = Rota::create($validated);
+        $rota = Rota::create($request->validated());
 
         return redirect()->route('rotas.edit', $rota)
             ->with('success', 'Rota cadastrada com sucesso! Você já pode vincular os pontos de parada.');
@@ -54,15 +48,9 @@ class RotaController extends Controller
         return view('rotas.edit', compact('rota', 'pontosDisponiveis'));
     }
 
-    public function update(Request $request, Rota $rota)
+    public function update(UpdateRotaRequest $request, Rota $rota)
     {
-        $validated = $request->validate([
-            'descricao' => 'required|string|max:255',
-        ]);
-
-        $validated['ativo'] = $request->has('ativo');
-
-        $rota->update($validated);
+        $rota->update($request->validated());
 
         return redirect()->route('rotas.edit', $rota)
             ->with('success', 'Dados da rota atualizados com sucesso.');

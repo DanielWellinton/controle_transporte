@@ -1,85 +1,138 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Detalhes do Ponto de Parada') }}
-            </h2>
+@extends('layouts.admin')
+
+@section('title', 'Detalhes do Ponto de Parada')
+@section('header_title', 'Detalhes do Ponto de Parada')
+
+@section('content')
+<!-- Leaflet CSS carregado diretamente para garantir a estilização nativa -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+    /* Força a anulação de resets globais do Tailwind que afetam as imagens do Leaflet */
+    .leaflet-container img {
+        max-width: none !important;
+        max-height: none !important;
+    }
+</style>
+
+<div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Card Topo / Cabeçalho -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
             <div class="flex items-center gap-3">
-                <a href="{{ route('ponto_de_paradas.index') }}" class="text-gray-600 hover:text-gray-900 text-sm font-semibold">Voltar</a>
-                <a href="{{ route('ponto_de_paradas.edit', $pontoDeParada) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded text-sm transition-colors shadow-sm">
-                    Editar
+                <a href="{{ route('ponto_de_paradas.index') }}" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition">
+                    &larr; Voltar
                 </a>
+                <h2 class="text-base font-bold text-slate-800">
+                    {{ $pontoDeParada->descricao }}
+                </h2>
             </div>
+            <p class="text-xs text-slate-500 mt-1">Detalhes e localização no mapa do ponto de parada.</p>
         </div>
-    </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <!-- Informações Principais -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 pb-6 border-b border-gray-100">
-                    <div>
-                        <p class="text-sm font-semibold text-gray-500">Descrição:</p>
-                        <p class="text-lg font-bold text-gray-900">{{ $pontoDeParada->descricao }}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold text-gray-500">Coordenadas (Lat / Lng):</p>
-                        <p class="text-base font-mono text-gray-800">{{ $pontoDeParada->latitude }}, {{ $pontoDeParada->longitude }}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold text-gray-500">Status:</p>
-                        <span class="mt-1 px-3 py-1 inline-flex text-xs font-semibold rounded-full {{ $pontoDeParada->ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                            {{ $pontoDeParada->ativo ? 'Ativo' : 'Inativo' }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Visualização Interativa do Mapa -->
-                <div>
-                    <h3 class="text-sm font-semibold text-gray-700 mb-2">Localização Cadastrada:</h3>
-                    <div 
-                        id="map" 
-                        style="height: 400px; width: 100%; min-height: 400px; z-index: 1;"
-                        class="border border-gray-300 rounded-lg shadow-sm"
-                        data-lat="{{ $pontoDeParada->latitude }}"
-                        data-lng="{{ $pontoDeParada->longitude }}"
-                        data-title="{{ $pontoDeParada->descricao }}"
-                    ></div>
-                </div>
-            </div>
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+            <a href="{{ route('ponto_de_paradas.edit', $pontoDeParada) }}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition shadow-md shadow-indigo-500/20">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span>Editar Ponto</span>
+            </a>
         </div>
     </div>
 
-    <!-- Leaflet CSS e JS (Gratuito & OpenSource) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- ESTRUTURA LADO A LADO -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const mapElement = document.getElementById('map');
-            if (!mapElement) return;
+        <!-- INFORMAÇÕES DO PONTO (5 COLUNAS) -->
+        <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-3">Informações Gerais</h3>
 
-            const lat = parseFloat(mapElement.dataset.lat);
-            const lng = parseFloat(mapElement.dataset.lng);
-            const title = mapElement.dataset.title;
+            <!-- Descrição -->
+            <div class="p-3.5 bg-slate-50/50 border border-slate-200/80 rounded-xl space-y-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Descrição</span>
+                <p class="text-sm font-semibold text-slate-800">{{ $pontoDeParada->descricao }}</p>
+            </div>
 
-            // Inicializa o mapa centralizado no ponto
-            const map = L.map('map').setView([lat, lng], 16);
+            <!-- Coordenadas -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="p-3.5 bg-slate-50/50 border border-slate-200/80 rounded-xl space-y-1">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Latitude</span>
+                    <p class="text-xs font-mono font-semibold text-slate-700">{{ $pontoDeParada->latitude }}</p>
+                </div>
+                <div class="p-3.5 bg-slate-50/50 border border-slate-200/80 rounded-xl space-y-1">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Longitude</span>
+                    <p class="text-xs font-mono font-semibold text-slate-700">{{ $pontoDeParada->longitude }}</p>
+                </div>
+            </div>
 
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map);
+            <!-- Status -->
+            <div class="p-3.5 bg-slate-50/50 border border-slate-200/80 rounded-xl space-y-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Status de Operação</span>
+                <div>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold {{ $pontoDeParada->ativo ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
+                        <span class="w-1.5 h-1.5 rounded-full {{ $pontoDeParada->ativo ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
+                        {{ $pontoDeParada->ativo ? 'Ativo' : 'Inativo' }}
+                    </span>
+                </div>
+            </div>
+        </div>
 
-            // Marcador fixo com popup descritivo
-            L.marker([lat, lng])
-                .addTo(map)
-                .bindPopup(`<b>${title}</b><br>Lat: ${lat}<br>Lng: ${lng}`)
-                .openPopup();
+        <!-- VISUALIZAÇÃO NO MAPA (7 COLUNAS) -->
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3">
+            <div class="flex justify-between items-center px-1">
+                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Localização Cadastrada</h3>
+            </div>
 
-            setTimeout(function () {
-                map.invalidateSize();
-            }, 200);
+            <div
+                id="map"
+                style="height: 450px; min-height: 450px; width: 100%;"
+                class="rounded-xl border border-slate-200 z-10 overflow-hidden"
+                data-lat="{{ str_replace(',', '.', $pontoDeParada->latitude) }}"
+                data-lng="{{ str_replace(',', '.', $pontoDeParada->longitude) }}"
+                data-title="{{ $pontoDeParada->descricao }}">
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Leaflet JS carregado diretamente no final do conteúdo -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const mapElement = document.getElementById('map');
+        if (!mapElement) return;
+
+        // CDN para os ícones padrão do Leaflet (evita o erro do marker transparente/quebrado)
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
         });
-    </script>
-</x-app-layout>
+
+        const lat = parseFloat(mapElement.dataset.lat);
+        const lng = parseFloat(mapElement.dataset.lng);
+        const title = mapElement.dataset.title;
+
+        const map = L.map('map').setView([lat, lng], 16);
+
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        L.marker([lat, lng])
+            .addTo(map)
+            .bindPopup(`<strong class="text-xs text-slate-800">${title}</strong><br><span class="text-xs text-slate-500 font-mono">Lat: ${lat}<br>Lng: ${lng}</span>`)
+            .openPopup();
+
+        // Recalcula as dimensões do container do mapa
+        setTimeout(function () {
+            map.invalidateSize();
+        }, 300);
+    });
+</script>
+@endsection

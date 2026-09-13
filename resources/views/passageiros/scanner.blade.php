@@ -1,128 +1,134 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Confirmar Embarque') }}
-        </h2>
-    </x-slot>
+@extends('layouts.admin')
 
-    <div class="py-8 bg-gray-100 min-h-screen">
-        <div class="max-w-md mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-                
-                <div class="text-center mb-6">
-                    <h3 class="text-lg font-bold text-gray-800">Ler QR Code da Viagem</h3>
-                    <p class="text-xs text-gray-500 mt-1">Aponte a câmera para o QR Code da viagem para confirmar sua presença.</p>
-                </div>
+@section('title', 'Confirmar Embarque')
+@section('header_title', 'Confirmar Embarque')
 
-                {{-- Area da Câmera --}}
-                <div id="reader-container" class="overflow-hidden rounded-xl border-2 border-dashed border-gray-300 mb-6 bg-black min-h-[260px] flex items-center justify-center">
-                    <div id="reader" class="w-full"></div>
-                </div>
+@section('content')
+<div class="max-w-md mx-auto space-y-6">
 
-                {{-- Feedback de Mensagem --}}
-                <div id="feedback-mensagem" class="hidden p-4 rounded-lg text-xs font-bold mb-4 text-center"></div>
-
-                {{-- Ações --}}
-                <div class="space-y-2">
-                    <button id="btn-reiniciar" onclick="reiniciarScanner()" class="hidden w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg uppercase tracking-wider shadow transition cursor-pointer">
-                        Escanear Novamente
-                    </button>
-
-                    <a href="{{ route('passageiros.index') }}" class="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-lg uppercase tracking-wider text-center no-underline border border-gray-300 block">
-                        Voltar para Viagens
-                    </a>
-                </div>
-
+    <!-- Card Principal do Scanner -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6">
+        
+        <!-- Header da Leitura -->
+        <div class="text-center mb-6">
+            <div class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-3 border border-indigo-100">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                </svg>
             </div>
+            <h3 class="text-base font-bold text-slate-800">Ler QR Code da Viagem</h3>
+            <p class="text-xs text-slate-500 mt-1">Aponte a câmera para o QR Code para confirmar sua presença a bordo.</p>
         </div>
+
+        <!-- Área do Container da Câmera -->
+        <div id="reader-container" class="overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 mb-5 bg-slate-950 min-h-[260px] flex items-center justify-center relative">
+            <div id="reader" class="w-full"></div>
+        </div>
+
+        <!-- Feedback de Mensagem -->
+        <div id="feedback-mensagem" class="hidden p-4 rounded-xl text-xs font-semibold mb-5 text-center border transition-all"></div>
+
+        <!-- Botões de Ação -->
+        <div class="space-y-2.5">
+            <button id="btn-reiniciar" onclick="reiniciarScanner()" class="hidden w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition shadow-md shadow-indigo-500/20 cursor-pointer">
+                Escanear Novamente
+            </button>
+
+            <a href="{{ route('passageiros.index') }}" class="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl text-center border border-slate-200 block transition">
+                &larr; Voltar para Viagens
+            </a>
+        </div>
+
     </div>
 
-    {{-- Script HTML5-QRCode --}}
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+</div>
 
-    <script>
-        let html5QrcodeScanner = null;
-        let isProcessing = false;
+<!-- Script HTML5-QRCode -->
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
-        function inicializarScanner() {
-            html5QrcodeScanner = new Html5Qrcode("reader");
-            
-            const config = { 
-                fps: 10, 
-                qrbox: { width: 220, height: 220 } 
-            };
+<script>
+    let html5QrcodeScanner = null;
+    let isProcessing = false;
 
-            html5QrcodeScanner.start(
-                { facingMode: "environment" }, 
-                config, 
-                onScanSuccess
-            ).catch(err => {
-                exibirFeedback('Erro ao acessar a câmera: ' + err, 'erro');
-            });
-        }
+    function inicializarScanner() {
+        html5QrcodeScanner = new Html5Qrcode("reader");
+        
+        const config = { 
+            fps: 10, 
+            qrbox: { width: 220, height: 220 } 
+        };
 
-        function onScanSuccess(decodedText) {
-            if (isProcessing) return;
-            isProcessing = true;
-
-            html5QrcodeScanner.stop().then(() => {
-                enviarValidacao(decodedText);
-            }).catch(() => {
-                enviarValidacao(decodedText);
-            });
-        }
-
-        function enviarValidacao(codigoQr) {
-            exibirFeedback('Registrando embarque...', 'info');
-
-            fetch("{{ route('passageiros.scanner.validar') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ codigo_qr: codigoQr })
-            })
-            .then(response => response.json().then(data => ({ status: response.status, body: data })))
-            .then(res => {
-                if (res.body.success) {
-                    exibirFeedback(res.body.message, 'sucesso');
-                } else {
-                    exibirFeedback(res.body.message || 'Falha ao registrar embarque.', 'erro');
-                }
-                document.getElementById('btn-reiniciar').classList.remove('hidden');
-            })
-            .catch(() => {
-                exibirFeedback('Erro de conexão com o servidor.', 'erro');
-                document.getElementById('btn-reiniciar').classList.remove('hidden');
-            });
-        }
-
-        function exibirFeedback(mensagem, tipo) {
-            const el = document.getElementById('feedback-mensagem');
-            el.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-800', 'bg-rose-100', 'text-rose-800', 'bg-blue-100', 'text-blue-800');
-
-            if (tipo === 'sucesso') {
-                el.classList.add('bg-emerald-100', 'text-emerald-800');
-            } else if (tipo === 'erro') {
-                el.classList.add('bg-rose-100', 'text-rose-800');
-            } else {
-                el.classList.add('bg-blue-100', 'text-blue-800');
-            }
-
-            el.innerText = mensagem;
-        }
-
-        function reiniciarScanner() {
-            isProcessing = false;
-            document.getElementById('feedback-mensagem').classList.add('hidden');
-            document.getElementById('btn-reiniciar').classList.add('hidden');
-            inicializarScanner();
-        }
-
-        document.addEventListener("DOMContentLoaded", function () {
-            inicializarScanner();
+        html5QrcodeScanner.start(
+            { facingMode: "environment" }, 
+            config, 
+            onScanSuccess
+        ).catch(err => {
+            exibirFeedback('Erro ao acessar a câmera: ' + err, 'erro');
         });
-    </script>
-</x-app-layout>
+    }
+
+    function onScanSuccess(decodedText) {
+        if (isProcessing) return;
+        isProcessing = true;
+
+        html5QrcodeScanner.stop().then(() => {
+            enviarValidacao(decodedText);
+        }).catch(() => {
+            enviarValidacao(decodedText);
+        });
+    }
+
+    function enviarValidacao(codigoQr) {
+        exibirFeedback('Registrando embarque...', 'info');
+
+        fetch("{{ route('passageiros.scanner.validar') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ codigo_qr: codigoQr })
+        })
+        .then(response => response.json().then(data => ({ status: response.status, body: data })))
+        .then(res => {
+            if (res.body.success) {
+                exibirFeedback(res.body.message, 'sucesso');
+            } else {
+                exibirFeedback(res.body.message || 'Falha ao registrar embarque.', 'erro');
+            }
+            document.getElementById('btn-reiniciar').classList.remove('hidden');
+        })
+        .catch(() => {
+            exibirFeedback('Erro de conexão com o servidor.', 'erro');
+            document.getElementById('btn-reiniciar').classList.remove('hidden');
+        });
+    }
+
+    function exibirFeedback(mensagem, tipo) {
+        const el = document.getElementById('feedback-mensagem');
+        el.className = 'p-4 rounded-xl text-xs font-semibold mb-5 text-center border transition-all';
+
+        if (tipo === 'sucesso') {
+            el.classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
+        } else if (tipo === 'erro') {
+            el.classList.add('bg-rose-50', 'text-rose-800', 'border-rose-200');
+        } else {
+            el.classList.add('bg-indigo-50', 'text-indigo-800', 'border-indigo-200');
+        }
+
+        el.innerText = mensagem;
+    }
+
+    function reiniciarScanner() {
+        isProcessing = false;
+        document.getElementById('feedback-mensagem').classList.add('hidden');
+        document.getElementById('btn-reiniciar').classList.add('hidden');
+        inicializarScanner();
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        inicializarScanner();
+    });
+</script>
+@endsection

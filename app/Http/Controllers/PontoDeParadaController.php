@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePontoDeParadaRequest;
 use App\Http\Requests\UpdatePontoDeParadaRequest;
-use Illuminate\Http\Request;
 use App\Models\PontoDeParada;
 
 class PontoDeParadaController extends Controller
@@ -21,17 +20,9 @@ class PontoDeParadaController extends Controller
         return view('ponto_de_paradas.create');
     }
 
-    public function store(Request $request)
+    public function store(StorePontoDeParadaRequest $request)
     {
-        $validated = $request->validate([
-            'descricao' => 'required|string|max:255',
-            'latitude'  => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-        ]);
-
-        $validated['ativo'] = $request->has('ativo');
-
-        PontoDeParada::create($validated);
+        PontoDeParada::create($request->validated());
 
         return redirect()->route('ponto_de_paradas.index')
             ->with('success', 'Ponto de parada cadastrado com sucesso.');
@@ -47,17 +38,9 @@ class PontoDeParadaController extends Controller
         return view('ponto_de_paradas.edit', ['pontoDeParada' => $pontoDeParada]);
     }
 
-    public function update(Request $request, PontoDeParada $pontoDeParada)
+    public function update(UpdatePontoDeParadaRequest $request, PontoDeParada $pontoDeParada)
     {
-        $validated = $request->validate([
-            'descricao' => 'required|string|max:255',
-            'latitude'  => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-        ]);
-
-        $validated['ativo'] = $request->has('ativo');
-
-        $pontoDeParada->update($validated);
+        $pontoDeParada->update($request->validated());
 
         return redirect()->route('ponto_de_paradas.index')
             ->with('success', 'Ponto de parada atualizado com sucesso.');

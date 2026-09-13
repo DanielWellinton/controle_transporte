@@ -1,125 +1,175 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Editar Ponto de Parada') }}
-            </h2>
-            <a href="{{ route('ponto_de_paradas.index') }}" class="text-gray-600 hover:text-gray-900 text-sm font-semibold">Voltar</a>
-        </div>
-    </x-slot>
+@extends('layouts.admin')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <form action="{{ route('ponto_de_paradas.update', $pontoDeParada) }}" method="POST">
-                    @csrf
-                    @method('PUT')
+@section('title', 'Editar Ponto de Parada')
+@section('header_title', 'Editar Ponto de Parada')
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Formulário -->
-                        <div>
-                            <!-- Descrição -->
-                            <div class="mb-4">
-                                <x-input-label for="descricao" :value="__('Descrição')" />
-                                <x-text-input id="descricao" class="block mt-1 w-full" type="text" name="descricao" :value="old('descricao', $pontoDeParada->descricao)" required />
-                                <x-input-error :messages="$errors->get('descricao')" class="mt-2" />
-                            </div>
+@section('content')
+<!-- Leaflet CSS carregado diretamente para garantir a estilização nativa -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+    /* Força a anulação de resets globais do Tailwind que afetam as imagens do Leaflet */
+    .leaflet-container img {
+        max-width: none !important;
+        max-height: none !important;
+    }
+</style>
 
-                            <!-- Latitude -->
-                            <div class="mb-4">
-                                <x-input-label for="latitude" :value="__('Latitude')" />
-                                <x-text-input id="latitude" class="block mt-1 w-full font-mono" type="text" name="latitude" :value="old('latitude', $pontoDeParada->latitude)" required readonly />
-                                <x-input-error :messages="$errors->get('latitude')" class="mt-2" />
-                            </div>
+<div class="max-w-7xl mx-auto space-y-6">
 
-                            <!-- Longitude -->
-                            <div class="mb-4">
-                                <x-input-label for="longitude" :value="__('Longitude')" />
-                                <x-text-input id="longitude" class="block mt-1 w-full font-mono" type="text" name="longitude" :value="old('longitude', $pontoDeParada->longitude)" required readonly />
-                                <x-input-error :messages="$errors->get('longitude')" class="mt-2" />
-                            </div>
-
-                            <!-- Ativo -->
-                            <div class="mb-4">
-                                <label for="ativo" class="inline-flex items-center">
-                                    <input id="ativo" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="ativo" value="1" {{ old('ativo', $pontoDeParada->ativo) ? 'checked' : '' }}>
-                                    <span class="ms-2 text-sm text-gray-600">{{ __('Ponto de Parada Ativo') }}</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Seletor de Mapa -->
-                        <div>
-                            <x-input-label :value="__('Localização no Mapa')" class="mb-2" />
-                            <div
-                                id="map"
-                                style="height: 350px; width: 100%; min-height: 350px; z-index: 1;"
-                                class="border border-gray-300 rounded-lg shadow-sm"
-                                data-lat="{{ old('latitude', $pontoDeParada->latitude ?? -23.550520) }}"
-                                data-lng="{{ old('longitude', $pontoDeParada->longitude ?? -46.633309) }}"></div>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-end mt-6 gap-3">
-                        <a href="{{ route('ponto_de_paradas.index') }}" class="text-gray-600 hover:text-gray-900 text-sm font-semibold">Cancelar</a>
-                        <x-primary-button>
-                            {{ __('Atualizar') }}
-                        </x-primary-button>
-                    </div>
-                </form>
+    <!-- Card Topo / Cabeçalho -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('ponto_de_paradas.index') }}" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition">
+                    &larr; Voltar
+                </a>
+                <h2 class="text-base font-bold text-slate-800">
+                    Editar: {{ $pontoDeParada->descricao }}
+                </h2>
             </div>
+            <p class="text-xs text-slate-500 mt-1">Atualize as informações do ponto e ajuste a localização exata no mapa.</p>
         </div>
     </div>
 
-    <!-- Leaflet CSS e JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Mensagens de Validação de Erros -->
+    @if ($errors->any())
+        <div class="p-4 rounded-xl text-xs font-semibold text-rose-800 bg-rose-50 border border-rose-200 space-y-1">
+            <p class="font-bold text-sm">Atenção:</p>
+            <ul class="list-disc list-inside">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const mapElement = document.getElementById('map');
-            if (!mapElement) return;
+    <form action="{{ route('ponto_de_paradas.update', $pontoDeParada) }}" method="POST" class="space-y-6">
+        @csrf
+        @method('PUT')
 
-            const initialLat = parseFloat(mapElement.dataset.lat) || -23.550520;
-            const initialLng = parseFloat(mapElement.dataset.lng) || -46.633309;
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-            // Inicializa o mapa
-            const map = L.map('map').setView([initialLat, initialLng], 15);
+            <!-- ÁREA DO FORMULÁRIO (5 COLUNAS) -->
+            <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-3">Dados do Ponto</h3>
 
-            // Tile Layer usando OpenStreetMap (Sem bloqueios de API / Headers)
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map);
+                <div class="space-y-4">
+                    <!-- Descrição -->
+                    <div>
+                        <label for="descricao" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Descrição</label>
+                        <input type="text" id="descricao" name="descricao" value="{{ old('descricao', $pontoDeParada->descricao) }}" required placeholder="Ex: Parada 01 - Praça Central" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 text-sm focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 transition-colors shadow-sm px-3 py-2" />
+                        @error('descricao') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
 
-            let marker = L.marker([initialLat, initialLng], {
-                draggable: true
-            }).addTo(map);
+                    <!-- Latitude -->
+                    <div>
+                        <label for="latitude" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Latitude</label>
+                        <input type="text" id="latitude" name="latitude" value="{{ old('latitude', str_replace(',', '.', $pontoDeParada->latitude)) }}" required readonly class="w-full rounded-xl border border-slate-200 bg-slate-100/70 text-slate-700 text-sm font-mono shadow-sm cursor-not-allowed px-3 py-2" />
+                        @error('latitude') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
 
-            function updateInputs(lat, lng) {
-                const latInput = document.getElementById('latitude');
-                const lngInput = document.getElementById('longitude');
+                    <!-- Longitude -->
+                    <div>
+                        <label for="longitude" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Longitude</label>
+                        <input type="text" id="longitude" name="longitude" value="{{ old('longitude', str_replace(',', '.', $pontoDeParada->longitude)) }}" required readonly class="w-full rounded-xl border border-slate-200 bg-slate-100/70 text-slate-700 text-sm font-mono shadow-sm cursor-not-allowed px-3 py-2" />
+                        @error('longitude') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
 
-                if (latInput) latInput.value = lat.toFixed(7);
-                if (lngInput) lngInput.value = lng.toFixed(7);
-            }
+                    <!-- Checkbox Ativo -->
+                    <div class="pt-2">
+                        <label for="ativo" class="inline-flex items-center gap-2 cursor-pointer">
+                            <input id="ativo" type="checkbox" name="ativo" value="1" {{ old('ativo', $pontoDeParada->ativo) ? 'checked' : '' }} class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 shadow-sm">
+                            <span class="text-xs font-semibold text-slate-700">Ponto de Parada Ativo</span>
+                        </label>
+                    </div>
+                </div>
 
-            marker.on('dragend', function(e) {
-                const position = marker.getLatLng();
-                updateInputs(position.lat, position.lng);
-            });
+                <!-- Ações -->
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                    <a href="{{ route('ponto_de_paradas.index') }}" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition shadow-md shadow-indigo-500/20 cursor-pointer">
+                        Atualizar Ponto
+                    </button>
+                </div>
+            </div>
 
-            map.on('click', function(e) {
-                const lat = e.latlng.lat;
-                const lng = e.latlng.lng;
-                marker.setLatLng([lat, lng]);
-                updateInputs(lat, lng);
-            });
+            <!-- ÁREA DO MAPA (7 COLUNAS) -->
+            <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 px-1">
+                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Localização no Mapa</h3>
+                    <span class="text-[11px] text-slate-400">Clique no mapa ou arraste o pin para ajustar</span>
+                </div>
 
-            // Força a recalcular o tamanho da div do mapa após a página carregar completamente
-            setTimeout(function() {
-                map.invalidateSize();
-            }, 200);
+                <div
+                    id="map"
+                    style="height: 500px; min-height: 500px; width: 100%;"
+                    class="rounded-xl border border-slate-200 z-10 overflow-hidden"
+                    data-lat="{{ old('latitude', str_replace(',', '.', $pontoDeParada->latitude) ?? -23.550520) }}"
+                    data-lng="{{ old('longitude', str_replace(',', '.', $pontoDeParada->longitude) ?? -46.633309) }}">
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+</div>
+
+<!-- Leaflet JS carregado diretamente no final do conteúdo -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const mapElement = document.getElementById('map');
+        if (!mapElement) return;
+
+        // CDN para os ícones padrão do Leaflet (evita ícone quebrado/transparente)
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
         });
-    </script>
-</x-app-layout>
+
+        const initialLat = parseFloat(mapElement.dataset.lat) || -23.550520;
+        const initialLng = parseFloat(mapElement.dataset.lng) || -46.633309;
+
+        const map = L.map('map').setView([initialLat, initialLng], 16);
+
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        let marker = L.marker([initialLat, initialLng], {
+            draggable: true
+        }).addTo(map);
+
+        function updateInputs(lat, lng) {
+            const latInput = document.getElementById('latitude');
+            const lngInput = document.getElementById('longitude');
+
+            if (latInput) latInput.value = lat.toFixed(7);
+            if (lngInput) lngInput.value = lng.toFixed(7);
+        }
+
+        marker.on('dragend', function(e) {
+            const position = marker.getLatLng();
+            updateInputs(position.lat, position.lng);
+        });
+
+        map.on('click', function(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            marker.setLatLng([lat, lng]);
+            updateInputs(lat, lng);
+        });
+
+        // Recalcula o tamanho da div do mapa após a montagem do grid
+        setTimeout(function() {
+            map.invalidateSize();
+        }, 300);
+    });
+</script>
+@endsection

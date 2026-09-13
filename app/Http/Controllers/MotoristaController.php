@@ -33,15 +33,7 @@ class MotoristaController extends Controller
      */
     public function store(StoreMotoristaRequest $request)
     {
-        $validated = $request->validate([
-            'usuario_id' => 'required|exists:users,id|unique:motoristas,usuario_id',
-            'cnh' => 'required|string|max:20|unique:motoristas,cnh',
-            'data_validade_cnh' => 'required|date',
-            'ativo' => 'boolean',
-        ]);
-        $validated['ativo'] = $request->has('ativo');
-        Motorista::create($validated);
-
+        Motorista::create($request->validated());
         return redirect()->route('motoristas.index')->with('success', 'Motorista cadastrado com sucesso.');
     }
 
@@ -67,15 +59,7 @@ class MotoristaController extends Controller
      */
     public function update(UpdateMotoristaRequest $request, Motorista $motorista)
     {
-        $validated = $request->validate([
-            'usuario_id' => 'required|exists:users,id|unique:motoristas,usuario_id,' . $motorista->id,
-            'cnh' => 'required|string|max:20|unique:motoristas,cnh,' . $motorista->id,
-            'data_validade_cnh' => 'required|date',
-            'ativo' => 'boolean',
-        ]);
-        $validated['ativo'] = $request->has('ativo');
-        $motorista->update($validated);
-
+        $motorista->update($request->validated());
         return redirect()->route('motoristas.index')->with('success', 'Motorista atualizado com sucesso.');
     }
 

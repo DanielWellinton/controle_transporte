@@ -4,13 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePassageiroRequest;
 use App\Http\Requests\UpdatePassageiroRequest;
-use Illuminate\Http\Request;
 use App\Models\Passageiro;
 use App\Models\Viagem;
-use App\Models\User;
-use App\Models\PontoDeParada;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 
 class PassageiroController extends Controller
 {
@@ -36,19 +32,9 @@ class PassageiroController extends Controller
         return view('passageiros.selecionar-pontos', compact('viagem', 'passageiro'));
     }
 
-    public function salvarPontos(Request $request, Viagem $viagem)
+    public function salvarPontos(StorePassageiroRequest $request, Viagem $viagem)
     {
-        $request->validate([
-            'ponto_de_parada_saida_id' => [
-                'required',
-                Rule::exists(PontoDeParada::class, 'id')
-            ],
-            'ponto_de_parada_chegada_id' => [
-                'required',
-                'different:ponto_de_parada_saida_id',
-                Rule::exists(PontoDeParada::class, 'id')
-            ],
-        ]);
+        $validated = $request->validated();
 
         // Atualiza se existir ou cria um novo registro
         Passageiro::updateOrCreate(
@@ -57,8 +43,8 @@ class PassageiroController extends Controller
                 'viagem_id'  => $viagem->id,
             ],
             [
-                'ponto_de_parada_saida_id'   => $request->ponto_de_parada_saida_id,
-                'ponto_de_parada_chegada_id' => $request->ponto_de_parada_chegada_id,
+                'ponto_de_parada_saida_id'   => $validated['ponto_de_parada_saida_id'],
+                'ponto_de_parada_chegada_id' => $validated['ponto_de_parada_chegada_id'],
                 'data_hora_saida'            => now(),
             ]
         );
@@ -66,7 +52,6 @@ class PassageiroController extends Controller
         return redirect()->route('passageiros.index')->with('success', 'Sua vaga foi confirmada nesta viagem!');
     }
 
-    // Altere a assinatura para receber (Viagem $viagem)
     public function cancelar(Viagem $viagem)
     {
         // Deleta o registro do usuário autenticado para esta viagem específica

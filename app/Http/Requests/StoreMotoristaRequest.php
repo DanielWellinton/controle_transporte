@@ -23,7 +23,17 @@ class StoreMotoristaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'usuario_id' => ['required', 'exists:users,id', 'unique:motoristas,usuario_id'],
+            'cnh' => ['required', 'string', 'max:20', 'unique:motoristas,cnh'],
+            'data_validade_cnh' => ['required', 'date'],
+            'ativo' => ['nullable', 'boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'ativo' => $this->has('ativo'),
+        ]);
     }
 }
