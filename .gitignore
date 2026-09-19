@@ -27,4 +27,3 @@ Homestead.yaml
 Thumbs.db
 /docker/nginx/certs/*
 !/docker/nginx/certs/.gitkeep
-/docker/nginx/default.conf
