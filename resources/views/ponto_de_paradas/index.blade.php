@@ -20,6 +20,53 @@
         </a>
     </div>
 
+    <!-- Barra de Filtros -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <form method="GET" action="{{ route('ponto_de_paradas.index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            
+            <!-- Campo Busca (Descrição) -->
+            <div class="sm:col-span-5">
+                <label for="search" class="block text-xs font-semibold text-slate-600 mb-1">Buscar por Descrição</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </span>
+                    <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Digite a descrição ou nome do ponto..." 
+                           class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800 placeholder-slate-400">
+                </div>
+            </div>
+
+            <!-- Filtro por Status -->
+            <div class="sm:col-span-4">
+                <label for="status" class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+                <select name="status" id="status" class="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800">
+                    <option value="">Todos os Status</option>
+                    <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Ativo</option>
+                    <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Inativo</option>
+                </select>
+            </div>
+
+            <!-- Botões de Ação do Filtro -->
+            <div class="sm:col-span-3 flex items-center gap-2">
+                <button type="submit" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <span>Filtrar</span>
+                </button>
+                
+                @if(request()->hasAny(['search', 'status']))
+                    <a href="{{ route('ponto_de_paradas.index') }}" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-xl transition flex items-center justify-center">
+                        Limpar
+                    </a>
+                @endif
+            </div>
+
+        </form>
+    </div>
+
     <!-- Tabela de Pontos -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
@@ -40,10 +87,10 @@
                                 {{ $ponto->descricao }}
                             </td>
                             <td class="py-4 px-6 text-center font-mono text-slate-600">
-                                {{ $ponto->latitude }}
+                                {{ $ponto->latitude ?? '-' }}
                             </td>
                             <td class="py-4 px-6 text-center font-mono text-slate-600">
-                                {{ $ponto->longitude }}
+                                {{ $ponto->longitude ?? '-' }}
                             </td>
                             <td class="py-4 px-6 text-center">
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold {{ $ponto->ativo ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
@@ -52,18 +99,25 @@
                                 </span>
                             </td>
                             <td class="py-4 px-6 text-right">
-                                <div class="flex items-center justify-end gap-2">
-                                    <a href="{{ route('ponto_de_paradas.show', $ponto) }}" class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold transition">
-                                        Ver
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <a href="{{ route('ponto_de_paradas.show', $ponto) }}" title="Visualizar" class="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
                                     </a>
-                                    <a href="{{ route('ponto_de_paradas.edit', $ponto) }}" class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-semibold transition">
-                                        Editar
+                                    <a href="{{ route('ponto_de_paradas.edit', $ponto) }}" title="Editar" class="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
                                     </a>
                                     <form action="{{ route('ponto_de_paradas.destroy', $ponto) }}" method="POST" class="inline-block" onsubmit="return confirm('Tem certeza que deseja remover este ponto de parada?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 font-semibold transition cursor-pointer">
-                                            Excluir
+                                        <button type="submit" title="Excluir" class="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
                                         </button>
                                     </form>
                                 </div>
@@ -78,7 +132,13 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
                                 </div>
-                                <p class="text-sm font-semibold text-slate-700">Nenhum ponto cadastrado</p>
+                                <p class="text-sm font-semibold text-slate-700">
+                                    @if(request()->hasAny(['search', 'status']))
+                                        Nenhum ponto encontrado com os filtros aplicados
+                                    @else
+                                        Nenhum ponto cadastrado
+                                    @endif
+                                </p>
                                 <p class="text-xs text-slate-400 mt-1">Cadastre novos pontos de parada para vinculá-los às rotas.</p>
                             </td>
                         </tr>
@@ -86,6 +146,13 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Paginação com preservação de querystring -->
+        @if($pontoDeParada->hasPages())
+            <div class="p-4 border-t border-slate-100">
+                {{ $pontoDeParada->withQueryString()->links() }}
+            </div>
+        @endif
     </div>
 
 </div>

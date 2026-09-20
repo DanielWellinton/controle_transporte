@@ -12,11 +12,31 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('papeis')->latest()->paginate(10);
+        $query = User::with(['papeis']);
 
-        return view('users.index', compact('users'));
+        // Filtro por Nome ou Email
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro por Papel
+        if ($request->filled('papel_id')) {
+            $query->whereHas('papeis', function ($q) use ($request) {
+                $q->where('papels.id', $request->input('papel_id'))
+                    ->where('usuario_papels.ativo', true);
+            });
+        }
+
+        $users = $query->paginate(10);
+        $papeis = \App\Models\Papel::all(); // Ajuste para a sua Model de Papéis
+
+        return view('users.index', compact('users', 'papeis'));
     }
 
     public function create()

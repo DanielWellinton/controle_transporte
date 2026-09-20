@@ -9,14 +9,47 @@ use App\Models\Motorista;
 use App\Models\Rota;
 use App\Models\Veiculo;
 use App\Models\Viagem;
+use Carbon\Carbon;
 
 class ViagemController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $viagens = Viagem::with(['rota', 'motorista', 'veiculo'])
-            ->latest('data_hora_saida')
-            ->paginate(10);
+        $query = Viagem::with(['rota', 'motorista.usuario', 'veiculo']);
+
+        // Busca Textual Geral
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('rota', function ($qRota) use ($search) {
+                    $qRota->where('descricao', 'like', "%{$search}%");
+                })
+                    ->orWhereHas('motorista.usuario', function ($qUser) use ($search) {
+                        $qUser->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('veiculo', function ($qVeiculo) use ($search) {
+                        $qVeiculo->where('descricao', 'like', "%{$search}%")
+                            ->orWhere('placa', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Filtro por Data Inicial (a partir do início do dia 00:00:00)
+        if ($request->filled('data_inicio')) {
+            $query->whereDate('data_hora_saida', '>=', $request->input('data_inicio'));
+        }
+
+        // Filtro por Data Fim (até o final do dia 23:59:59)
+        if ($request->filled('data_fim')) {
+            $query->whereDate('data_hora_saida', '<=', $request->input('data_fim'));
+        }
+
+        // Filtro por Status
+        if ($request->filled('status')) {
+            $query->where('ativo', $request->input('status'));
+        }
+
+        $viagens = $query->orderBy('data_hora_saida', 'desc')->paginate(10);
 
         return view('viagems.index', compact('viagens'));
     }

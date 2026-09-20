@@ -6,16 +6,35 @@ use App\Http\Requests\StoreMotoristaRequest;
 use App\Http\Requests\UpdateMotoristaRequest;
 use App\Models\Motorista;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class MotoristaController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $motoristas = Motorista::with('usuario')->get();
-
+        $query = Motorista::with(['usuario']);
+    
+        // Filtro por Nome (via relacionamento com Usuario) ou por CNH
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('cnh', 'like', "%{$search}%")
+                  ->orWhereHas('usuario', function($qUser) use ($search) {
+                      $qUser->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+    
+        // Filtro por Status (Ativo / Inativo)
+        if ($request->filled('status')) {
+            $query->where('ativo', $request->input('status'));
+        }
+    
+        $motoristas = $query->paginate(10);
+    
         return view('motoristas.index', compact('motoristas'));
     }
 

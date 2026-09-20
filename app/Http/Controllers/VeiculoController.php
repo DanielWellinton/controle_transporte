@@ -9,9 +9,26 @@ use App\Models\Veiculo;
 
 class VeiculoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $veiculos = Veiculo::all();
+        $query = Veiculo::query();
+
+        // Filtro por Descrição ou Placa
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('descricao', 'like', "%{$search}%")
+                    ->orWhere('placa', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro por Status
+        if ($request->filled('status')) {
+            $query->where('ativo', $request->input('status'));
+        }
+
+        $veiculos = $query->paginate(10);
+
         return view('veiculos.index', compact('veiculos'));
     }
 

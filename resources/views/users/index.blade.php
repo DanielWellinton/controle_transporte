@@ -2,6 +2,7 @@
 
 @section('content')
 <div class="space-y-6">
+    <!-- Cabeçalho -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Gestão de Usuários</h1>
@@ -13,6 +14,53 @@
         </a>
     </div>
 
+    <!-- Barra de Filtros -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <form method="GET" action="{{ route('users.index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            
+            <!-- Campo Busca (Nome ou E-mail) -->
+            <div class="sm:col-span-5">
+                <label for="search" class="block text-xs font-semibold text-slate-600 mb-1">Buscar por Nome / E-mail</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </span>
+                    <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Digite o nome ou e-mail..." 
+                           class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800 placeholder-slate-400">
+                </div>
+            </div>
+
+            <!-- Filtro por Papel / Função -->
+            <div class="sm:col-span-4">
+                <label for="papel_id" class="block text-xs font-semibold text-slate-600 mb-1">Papel / Função</label>
+                <select name="papel_id" id="papel_id" class="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800">
+                    <option value="">Todos os Papéis</option>
+                    @foreach($papeis as $papel)
+                        <option value="{{ $papel->id }}" {{ request('papel_id') == $papel->id ? 'selected' : '' }}>
+                            {{ $papel->descricao ?? $papel->nome }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Botões de Ação do Filtro -->
+            <div class="sm:col-span-3 flex items-center gap-2">
+                <button type="submit" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                    <span>Filtrar</span>
+                </button>
+                
+                @if(request()->hasAny(['search', 'papel_id']))
+                    <a href="{{ route('users.index') }}" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-xl transition flex items-center justify-center">
+                        Limpar
+                    </a>
+                @endif
+            </div>
+
+        </form>
+    </div>
+
+    <!-- Tabela de Usuários -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -61,15 +109,23 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-8 text-center text-slate-400">Nenhum usuário cadastrado.</td>
+                            <td colspan="5" class="py-8 text-center text-slate-400">
+                                @if(request()->hasAny(['search', 'papel_id']))
+                                    Nenhum usuário encontrado com os filtros aplicados.
+                                @else
+                                    Nenhum usuário cadastrado.
+                                @endif
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+
+        <!-- Paginação com preservação de querystring -->
         @if($users->hasPages())
             <div class="p-4 border-t border-slate-100">
-                {{ $users->links() }}
+                {{ $users->withQueryString()->links() }}
             </div>
         @endif
     </div>

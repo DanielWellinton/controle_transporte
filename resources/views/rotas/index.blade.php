@@ -37,6 +37,53 @@
         </div>
     @endif
 
+    <!-- Barra de Filtros -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <form method="GET" action="{{ route('rotas.index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            
+            <!-- Campo Busca (Descrição) -->
+            <div class="sm:col-span-5">
+                <label for="search" class="block text-xs font-semibold text-slate-600 mb-1">Buscar por Descrição</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </span>
+                    <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Digite o nome ou descrição da rota..." 
+                           class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800 placeholder-slate-400">
+                </div>
+            </div>
+
+            <!-- Filtro por Status -->
+            <div class="sm:col-span-4">
+                <label for="status" class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+                <select name="status" id="status" class="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800">
+                    <option value="">Todos os Status</option>
+                    <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Ativo</option>
+                    <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Inativo</option>
+                </select>
+            </div>
+
+            <!-- Botões de Ação do Filtro -->
+            <div class="sm:col-span-3 flex items-center gap-2">
+                <button type="submit" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <span>Filtrar</span>
+                </button>
+                
+                @if(request()->hasAny(['search', 'status']))
+                    <a href="{{ route('rotas.index') }}" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-xl transition flex items-center justify-center">
+                        Limpar
+                    </a>
+                @endif
+            </div>
+
+        </form>
+    </div>
+
     <!-- TABELA DE ROTAS -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
@@ -62,18 +109,27 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-right whitespace-nowrap">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <a href="{{ route('rotas.show', $rota) }}" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition">
-                                            Ver
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <a href="{{ route('rotas.show', $rota) }}" title="Visualizar"
+                                           class="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                            </svg>
                                         </a>
-                                        <a href="{{ route('rotas.edit', $rota) }}" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg transition">
-                                            Editar
+                                        <a href="{{ route('rotas.edit', $rota) }}" title="Editar"
+                                           class="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
                                         </a>
                                         <form action="{{ route('rotas.destroy', $rota) }}" method="POST" class="inline-block" onsubmit="return confirm('Tem certeza que deseja remover esta rota?');">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-lg transition cursor-pointer">
-                                                Excluir
+                                            <button type="submit" title="Excluir" class="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
                                             </button>
                                         </form>
                                     </div>
@@ -81,8 +137,19 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="px-6 py-10 text-center text-slate-400 font-medium">
-                                    Nenhuma rota cadastrada no sistema.
+                                <td colspan="3" class="px-6 py-12 text-center text-slate-400 font-medium">
+                                    <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                        </svg>
+                                    </div>
+                                    <p class="text-sm font-semibold text-slate-700">
+                                        @if(request()->hasAny(['search', 'status']))
+                                            Nenhuma rota encontrada com os filtros aplicados.
+                                        @else
+                                            Nenhuma rota cadastrada no sistema.
+                                        @endif
+                                    </p>
                                 </td>
                             </tr>
                         @endforelse
@@ -96,6 +163,12 @@
                 </tbody>
             </table>
         </div>
+
+        @if(isset($rotas) && method_exists($rotas, 'hasPages') && $rotas->hasPages())
+            <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+                {{ $rotas->withQueryString()->links() }}
+            </div>
+        @endif
     </div>
 
 </div>

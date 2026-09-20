@@ -10,9 +10,21 @@ use App\Models\PontoDeParada;
 
 class RotaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $rotas = Rota::withCount('pontosDeParada')->get() ?? collect();
+        $query = Rota::query();
+
+        // Filtro por Descrição
+        if ($request->filled('search')) {
+            $query->where('descricao', 'like', '%' . $request->input('search') . '%');
+        }
+
+        // Filtro por Status
+        if ($request->filled('status')) {
+            $query->where('ativo', $request->input('status'));
+        }
+
+        $rotas = $query->paginate(10);
 
         return view('rotas.index', compact('rotas'));
     }

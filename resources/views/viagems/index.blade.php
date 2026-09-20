@@ -12,16 +12,18 @@
             <h2 class="text-base font-bold text-slate-800">
                 Lista de Viagens
             </h2>
-            <p class="text-xs text-slate-500 mt-0.5">Acompanhe e gerencie a programação de viagens, motoristas e veículos alocados.</p>
+            <p class="text-xs text-slate-500 mt-1">Acompanhe e gerencie a programação de viagens, motoristas e veículos alocados.</p>
         </div>
 
-        <a href="{{ route('viagems.create') }}"
-            class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 self-start sm:self-auto">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Nova Viagem</span>
-        </a>
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+            <a href="{{ route('viagems.create') }}"
+               class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition shadow-md shadow-indigo-500/20">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Nova Viagem</span>
+            </a>
+        </div>
     </div>
 
     <!-- Mensagem de Sucesso -->
@@ -36,9 +38,69 @@
         </div>
     @endif
 
-    <!-- Tabela de Viagens -->
+    <!-- Barra de Filtros Completa -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <form method="GET" action="{{ route('viagems.index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            
+            <!-- Campo Busca (Rota, Motorista ou Veículo) -->
+            <div class="sm:col-span-12 lg:col-span-4">
+                <label for="search" class="block text-xs font-semibold text-slate-600 mb-1">Buscar</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </span>
+                    <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Buscar por rota, motorista ou veículo..." 
+                           class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800 placeholder-slate-400">
+                </div>
+            </div>
+
+            <!-- Filtro por Data Inicial -->
+            <div class="sm:col-span-6 lg:col-span-2">
+                <label for="data_inicio" class="block text-xs font-semibold text-slate-600 mb-1">Data Início</label>
+                <input type="date" name="data_inicio" id="data_inicio" value="{{ request('data_inicio') }}" 
+                       class="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800">
+            </div>
+
+            <!-- Filtro por Data Fim -->
+            <div class="sm:col-span-6 lg:col-span-2">
+                <label for="data_fim" class="block text-xs font-semibold text-slate-600 mb-1">Data Fim</label>
+                <input type="date" name="data_fim" id="data_fim" value="{{ request('data_fim') }}" 
+                       class="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800">
+            </div>
+
+            <!-- Filtro por Status -->
+            <div class="sm:col-span-6 lg:col-span-2">
+                <label for="status" class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+                <select name="status" id="status" class="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800">
+                    <option value="">Todos</option>
+                    <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Ativa</option>
+                    <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Inativa</option>
+                </select>
+            </div>
+
+            <!-- Botões de Ação do Filtro -->
+            <div class="sm:col-span-6 lg:col-span-2 flex items-center gap-2">
+                <button type="submit" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <span>Filtrar</span>
+                </button>
+                
+                @if(request()->hasAny(['search', 'data_inicio', 'data_fim', 'status']))
+                    <a href="{{ route('viagems.index') }}" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-xl transition flex items-center justify-center">
+                        Limpar
+                    </a>
+                @endif
+            </div>
+
+        </form>
+    </div>
+
+    <!-- TABELA DE VIAGENS -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        @if($viagens->count() > 0)
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
@@ -52,87 +114,103 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-xs">
-                    @foreach ($viagens as $viagem)
-                        <tr class="hover:bg-slate-50/70 transition-colors">
-                            <td class="px-6 py-4 font-semibold text-slate-800">
-                                {{ $viagem->rota->descricao ?? 'Sem Rota' }}
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="font-semibold text-slate-800">
-                                    {{ $viagem->motorista->usuario->name ?? 'N/A' }}
-                                </div>
-                                @if($viagem->veiculo)
-                                    <div class="text-[11px] text-slate-400 font-medium">
-                                        {{ $viagem->veiculo->descricao }} <span class="font-mono font-bold text-slate-500 uppercase">({{ $viagem->veiculo->placa }})</span>
+                    @isset($viagens)
+                        @forelse ($viagens as $viagem)
+                            <tr class="hover:bg-slate-50/60 transition-colors">
+                                <td class="px-6 py-4 font-semibold text-slate-800">
+                                    {{ $viagem->rota->descricao ?? 'Sem Rota' }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="font-semibold text-slate-800">
+                                        {{ $viagem->motorista->usuario->name ?? 'N/A' }}
                                     </div>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 text-center text-slate-600 font-medium">
-                                {{ $viagem->data_hora_saida ? $viagem->data_hora_saida->format('d/m/Y H:i') : '-' }}
-                            </td>
-                            <td class="px-6 py-4 text-center text-slate-600 font-medium">
-                                {{ $viagem->data_hora_chegada ? $viagem->data_hora_chegada->format('d/m/Y H:i') : '-' }}
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                @if($viagem->ativo)
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        Ativa
+                                    @if($viagem->veiculo)
+                                        <div class="text-[11px] text-slate-400 font-medium">
+                                            {{ $viagem->veiculo->descricao }} <span class="font-mono font-bold text-slate-500 uppercase">({{ $viagem->veiculo->placa }})</span>
+                                        </div>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-center text-slate-600 font-medium whitespace-nowrap">
+                                    {{ $viagem->data_hora_saida ? $viagem->data_hora_saida->format('d/m/Y H:i') : '-' }}
+                                </td>
+                                <td class="px-6 py-4 text-center text-slate-600 font-medium whitespace-nowrap">
+                                    {{ $viagem->data_hora_chegada ? $viagem->data_hora_chegada->format('d/m/Y H:i') : '-' }}
+                                </td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold {{ $viagem->ativo ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
+                                        <span class="w-1.5 h-1.5 rounded-full {{ $viagem->ativo ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
+                                        {{ $viagem->ativo ? 'Ativa' : 'Inativa' }}
                                     </span>
-                                @else
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                        Inativa
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right font-medium">
-                                <div class="flex items-center justify-end gap-1.5">
-                                    <a href="{{ route('viagems.show', $viagem) }}"
-                                        class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition"
-                                        title="Ver detalhes">
-                                        Ver
-                                    </a>
+                                </td>
+                                <td class="px-6 py-4 text-right whitespace-nowrap">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <a href="{{ route('viagems.show', $viagem) }}" title="Visualizar"
+                                           class="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                            </svg>
+                                        </a>
 
-                                    <a href="{{ route('viagems.duplicate', $viagem) }}"
-                                        class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-semibold rounded-lg transition inline-flex items-center gap-1"
-                                        title="Duplicar esta viagem">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        <a href="{{ route('viagems.duplicate', $viagem) }}" title="Duplicar"
+                                           class="p-2 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                            </svg>
+                                        </a>
+
+                                        <a href="{{ route('viagems.edit', $viagem) }}" title="Editar"
+                                           class="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                        </a>
+
+                                        <form action="{{ route('viagems.destroy', $viagem) }}" method="POST" class="inline-block" onsubmit="return confirm('Tem certeza que deseja remover esta viagem?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" title="Excluir" class="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-6 py-12 text-center text-slate-400 font-medium">
+                                    <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                         </svg>
-                                        <span>Duplicar</span>
-                                    </a>
-
-                                    <a href="{{ route('viagems.edit', $viagem) }}"
-                                        class="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg transition"
-                                        title="Editar">
-                                        Editar
-                                    </a>
-
-                                    <form action="{{ route('viagems.destroy', $viagem) }}" method="POST" class="inline-block" onsubmit="return confirm('Deseja excluir esta viagem?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-lg transition cursor-pointer" title="Excluir">
-                                            Excluir
-                                        </button>
-                                    </form>
-                                </div>
+                                    </div>
+                                    <p class="text-sm font-semibold text-slate-700">
+                                        @if(request()->hasAny(['search', 'data_inicio', 'data_fim', 'status']))
+                                            Nenhuma viagem encontrada para os filtros aplicados.
+                                        @else
+                                            Nenhuma viagem cadastrada no sistema.
+                                        @endif
+                                    </p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    @else
+                        <tr>
+                            <td colspan="6" class="px-6 py-10 text-center text-slate-400 font-medium">
+                                Nenhum registro encontrado.
                             </td>
                         </tr>
-                    @endforeach
+                    @endisset
                 </tbody>
             </table>
         </div>
 
-        @if(method_exists($viagens, 'hasPages') && $viagens->hasPages())
+        @if(isset($viagens) && method_exists($viagens, 'hasPages') && $viagens->hasPages())
             <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
-                {{ $viagens->links() }}
+                {{ $viagens->withQueryString()->links() }}
             </div>
-        @endif
-        @else
-        <div class="p-12 text-center text-slate-400 font-medium text-xs">
-            Nenhuma viagem cadastrada no sistema.
-        </div>
         @endif
     </div>
 

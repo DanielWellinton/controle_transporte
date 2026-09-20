@@ -5,12 +5,25 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePontoDeParadaRequest;
 use App\Http\Requests\UpdatePontoDeParadaRequest;
 use App\Models\PontoDeParada;
+use Illuminate\Http\Request;
 
 class PontoDeParadaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $pontoDeParada = PontoDeParada::all();
+        $query = PontoDeParada::query();
+
+        // Filtro por Descrição
+        if ($request->filled('search')) {
+            $query->where('descricao', 'like', '%' . $request->input('search') . '%');
+        }
+
+        // Filtro por Status
+        if ($request->filled('status')) {
+            $query->where('ativo', $request->input('status'));
+        }
+
+        $pontoDeParada = $query->paginate(10);
 
         return view('ponto_de_paradas.index', compact('pontoDeParada'));
     }
