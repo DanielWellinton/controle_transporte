@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('rota_ponto_de_paradas', function (Blueprint $table) {
             $table->foreignId('rota_id')->constrained('rotas')->onDelete('cascade');
-            $table->foreignId('ponto_de_parada_id')->constrained('ponto_de_paradas')->onDelete('cascade');
+            $table->foreignId('ponto_de_parada_id')->constrained('ponto-de-paradas')->onDelete('cascade');
             
             $table->integer('ordem')->default(1);
             $table->boolean('ativo')->default(true);

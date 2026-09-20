@@ -69,7 +69,7 @@ class RotaController extends Controller
     public function vincularPonto(Request $request, Rota $rota)
     {
         $validated = $request->validate([
-            'ponto_de_parada_id' => 'required|exists:ponto_de_paradas,id',
+            'ponto_de_parada_id' => 'required|exists:ponto-de-paradas,id',
         ]);
 
         $proximaOrdem = ($rota->pontosDeParada()->max('rota_ponto_de_paradas.ordem') ?? 0) + 1;

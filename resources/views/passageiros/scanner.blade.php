@@ -34,7 +34,7 @@
                 Escanear Novamente
             </button>
 
-            <a href="{{ route('passageiros.index') }}" class="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl text-center border border-slate-200 block transition">
+            <a href="{{ route('dashboard') }}" class="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl text-center border border-slate-200 block transition">
                 &larr; Voltar para Viagens
             </a>
         </div>

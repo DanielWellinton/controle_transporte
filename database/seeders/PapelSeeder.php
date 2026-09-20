@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Papel;
 use Illuminate\Database\Seeder;
 
 class PapelSeeder extends Seeder
@@ -12,6 +12,14 @@ class PapelSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        $papeis = [
+            ['descricao' => 'Admin', 'ativo' => true],
+            ['descricao' => 'Passageiro', 'ativo' => true],
+            ['descricao' => 'Motorista', 'ativo' => true],
+        ];
+
+        foreach ($papeis as $papel) {
+            Papel::firstOrCreate(['descricao' => $papel['descricao']], $papel);
+        }
     }
 }

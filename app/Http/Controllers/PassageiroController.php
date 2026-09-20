@@ -17,7 +17,7 @@ class PassageiroController extends Controller
             ->orderBy('data_hora_saida', 'asc')
             ->get();
 
-        return view('passageiros.index', compact('viagens'));
+        return view('dashboard', compact('viagens'));
     }
 
     // Exibe o mapa para a viagem selecionada
@@ -49,7 +49,7 @@ class PassageiroController extends Controller
             ]
         );
 
-        return redirect()->route('passageiros.index')->with('success', 'Sua vaga foi confirmada nesta viagem!');
+        return redirect()->route('dashboard')->with('success', 'Sua vaga foi confirmada nesta viagem!');
     }
 
     public function cancelar(Viagem $viagem)
@@ -59,6 +59,6 @@ class PassageiroController extends Controller
             ->where('viagem_id', $viagem->id)
             ->delete();
 
-        return redirect()->route('passageiros.index')->with('success', 'Sua participação foi cancelada.');
+        return redirect()->route('dashboard')->with('success', 'Sua participação foi cancelada.');
     }
 }

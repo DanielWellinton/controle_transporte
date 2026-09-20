@@ -36,7 +36,7 @@ $pontosAtivos = optional($viagem->rota)->pontosDeParada
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <div class="flex items-center gap-3">
-                <a href="{{ route('passageiros.index') }}" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition">
+                <a href="{{ route('dashboard') }}" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition">
                     &larr; Voltar
                 </a>
                 <h2 class="text-base font-bold text-slate-800">
@@ -183,7 +183,7 @@ $pontosAtivos = optional($viagem->rota)->pontosDeParada
                         </form>
                     </div>
                 @else
-                    <a href="{{ route('passageiros.index') }}"
+                    <a href="{{ route('dashboard') }}"
                         class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl border border-slate-200 transition flex items-center justify-center text-center">
                         Cancelar / Voltar
                     </a>

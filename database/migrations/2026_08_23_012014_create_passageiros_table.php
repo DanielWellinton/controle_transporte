@@ -15,8 +15,8 @@ return new class extends Migration
             $table->foreignId('usuario_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('viagem_id')->constrained('viagems')->onDelete('cascade');
 
-            $table->foreignId('ponto_de_parada_saida_id')->constrained('ponto_de_paradas')->onDelete('cascade');
-            $table->foreignId('ponto_de_parada_chegada_id')->nullable()->constrained('ponto_de_paradas')->onDelete('cascade');
+            $table->foreignId('ponto_de_parada_saida_id')->constrained('ponto-de-paradas')->onDelete('cascade');
+            $table->foreignId('ponto_de_parada_chegada_id')->nullable()->constrained('ponto-de-paradas')->onDelete('cascade');
 
             $table->dateTime('data_hora_saida');
             $table->dateTime('data_hora_chegada')->nullable();
