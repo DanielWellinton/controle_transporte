@@ -34,6 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware([CheckAdmin::class])
         ->group(function () {
             Route::resource('users', UserController::class);
+            Route::get('/usuarios/autocomplete', [UserController::class, 'autocomplete'])->name('usuarios.autocomplete');
             Route::resource('motoristas', MotoristaController::class);
             Route::resource('veiculos', VeiculoController::class);
             Route::resource('ponto-de-paradas', PontoDeParadaController::class)->names('ponto_de_paradas');

@@ -157,4 +157,43 @@ class UserController extends Controller
 
         return redirect()->route('users.index')->with('success', 'Usuário removido com sucesso!');
     }
+
+    public function autocomplete(Request $request)
+    {
+        $term = $request->query('q');
+        $currentUsuarioId = $request->query('current_usuario_id');
+
+        if (!$term) {
+            return response()->json([]);
+        }
+
+        $usuarios = User::query()
+            // 1. Filtra apenas usuários com o papel 'Motorista' ativo e dentro do prazo
+            ->whereHas('papeis', function ($query) {
+                $query->where('descricao', 'Motorista')
+                    ->where('papels.ativo', true)
+                    ->where('usuario_papels.ativo', true)
+                    ->where(function ($q) {
+                        $q->whereNull('usuario_papels.data_hora_fim')
+                            ->orWhere('usuario_papels.data_hora_fim', '>', now());
+                    });
+            })
+            // 2. Não traz usuários que já possuem registro em motoristas, EXCETO se for o usuário do registro atual sendo editado
+            ->where(function ($q) use ($currentUsuarioId) {
+                $q->whereDoesntHave('motorista');
+
+                if ($currentUsuarioId) {
+                    $q->orWhere('id', $currentUsuarioId);
+                }
+            })
+            // 3. Busca por Nome ou E-mail
+            ->where(function ($query) use ($term) {
+                $query->where('name', 'like', "%{$term}%")
+                    ->orWhere('email', 'like', "%{$term}%");
+            })
+            ->limit(8)
+            ->get(['id', 'name', 'email']);
+
+        return response()->json($usuarios);
+    }
 }

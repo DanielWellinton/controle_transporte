@@ -24,22 +24,42 @@
             @csrf
             @method('PUT')
 
-            <!-- Usuário -->
-            <div>
-                <x-input-label for="usuario_id" :value="__('Usuário do Sistema')" class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" />
+            <!-- Usuário (Autocomplete) -->
+            <div class="relative" id="usuario-autocomplete-wrapper">
+                <x-input-label for="usuario_search" :value="__('Usuário do Sistema')" class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" />
+                
+                <!-- Input Oculto enviado ao backend (ID do usuário selecionado) -->
+                <input type="hidden" name="usuario_id" id="usuario_id" value="{{ old('usuario_id', $motorista->usuario_id) }}">
+                
                 <div class="relative">
-                    <select id="usuario_id" name="usuario_id" class="w-full rounded-xl border-slate-200 bg-slate-50/50 text-slate-800 text-sm focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 transition-colors shadow-sm">
-                        @foreach ($usuarios as $usuario)
-                            <option value="{{ $usuario->id }}" {{ old('usuario_id', $motorista->usuario_id) == $usuario->id ? 'selected' : '' }}>
-                                {{ $usuario->name }} ({{ $usuario->email }})
-                            </option>
-                        @endforeach
-                    </select>
+                    <input 
+                        type="text" 
+                        id="usuario_search" 
+                        value="{{ old('usuario_nome', $motorista->usuario ? $motorista->usuario->name . ' (' .$motorista->usuario->email . ')' : '') }}" 
+                        placeholder="Digite para buscar o usuário por nome ou e-mail..." 
+                        autocomplete="off"
+                        class="w-full rounded-xl border-slate-200 bg-slate-50/50 text-slate-800 text-sm focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 transition-colors shadow-sm pr-9"
+                    />
+
+                    <!-- Campo oculto para reter o nome exibido caso retorne erro de validação -->
+                    <input type="hidden" name="usuario_nome" id="usuario_nome_hidden" value="{{ old('usuario_nome', $motorista->usuario ? $motorista->usuario->name . ' (' .$motorista->usuario->email . ')' : '') }}">
+
+                    <!-- Botão para Limpar Seleção -->
+                    <button type="button" id="btn-clear-usuario" class="{{ old('usuario_id', $motorista->usuario_id) ? '' : 'hidden' }} absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
                 </div>
+
+                <!-- Dropdown de Resultados do Autocomplete -->
+                <div id="usuario-autocomplete-results" class="hidden absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto divide-y divide-slate-100">
+                </div>
+
                 <x-input-error :messages="$errors->get('usuario_id')" class="mt-1.5 text-xs text-rose-600" />
             </div>
 
-            <!-- Grid com CNH e Validade (Responsivo: 1 col no mobile, 2 no PC) -->
+            <!-- Grid com CNH e Validade -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 
                 <!-- CNH -->
@@ -87,7 +107,7 @@
                 </label>
             </div>
 
-            <!-- Footer do Formulário com Botões Ação -->
+            <!-- Footer do Formulário com Botões de Ação -->
             <div class="pt-6 border-t border-slate-100 flex items-center justify-end gap-3">
                 <a href="{{ route('motoristas.index') }}" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold text-xs transition">
                     Cancelar
@@ -101,4 +121,87 @@
     </div>
 
 </div>
+
+<!-- Script Autocomplete do Usuário -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('usuario_search');
+    const hiddenIdInput = document.getElementById('usuario_id');
+    const hiddenNameInput = document.getElementById('usuario_nome_hidden');
+    const resultsContainer = document.getElementById('usuario-autocomplete-results');
+    const clearBtn = document.getElementById('btn-clear-usuario');
+    let debounceTimer;
+
+    searchInput.addEventListener('input', function () {
+        const query = this.value.trim();
+        hiddenNameInput.value = query;
+
+        if (query === '') {
+            hiddenIdInput.value = '';
+            clearBtn.classList.add('hidden');
+        } else {
+            clearBtn.classList.remove('hidden');
+        }
+
+        if (query.length < 2) {
+            resultsContainer.classList.add('hidden');
+            resultsContainer.innerHTML = '';
+            return;
+        }
+
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            fetch(`{{ route('usuarios.autocomplete') }}?q=${encodeURIComponent(query)}&current_usuario_id={{ $motorista->usuario_id }}`)
+                .then(response => response.json())
+                .then(data => {
+                    resultsContainer.innerHTML = '';
+
+                    if (data.length === 0) {
+                        resultsContainer.innerHTML = `
+                            <div class="p-3 text-xs text-slate-400 text-center">
+                                Nenhum usuário encontrado.
+                            </div>`;
+                    } else {
+                        data.forEach(item => {
+                            const option = document.createElement('div');
+                            option.className = 'p-3 hover:bg-indigo-50 cursor-pointer transition flex flex-col gap-0.5 text-xs text-slate-700';
+                            option.innerHTML = `
+                                <span class="font-bold text-slate-800">${item.name}</span>
+                                <span class="text-slate-400 text-[11px]">${item.email}</span>
+                            `;
+
+                            option.addEventListener('click', function () {
+                                const label = `${item.name} (${item.email})`;
+                                searchInput.value = label;
+                                hiddenIdInput.value = item.id;
+                                hiddenNameInput.value = label;
+                                resultsContainer.classList.add('hidden');
+                                clearBtn.classList.remove('hidden');
+                            });
+
+                            resultsContainer.appendChild(option);
+                        });
+                    }
+
+                    resultsContainer.classList.remove('hidden');
+                })
+                .catch(err => console.error('Erro ao realizar busca de usuários:', err));
+        }, 300);
+    });
+
+    clearBtn.addEventListener('click', function () {
+        searchInput.value = '';
+        hiddenIdInput.value = '';
+        hiddenNameInput.value = '';
+        resultsContainer.classList.add('hidden');
+        clearBtn.classList.add('hidden');
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!document.getElementById('usuario-autocomplete-wrapper').contains(e.target)) {
+            resultsContainer.classList.add('hidden');
+        }
+    });
+});
+</script>
 @endsection
