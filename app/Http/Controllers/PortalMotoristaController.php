@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Viagem;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PortalMotoristaController extends Controller
 {
+
     /**
-     * Exibe o painel do motorista com as viagens agendadas e ativas.
+     * Exibe o painel do motorista apenas com as viagens agendadas e ativas.
      */
     public function index(Request $request)
     {
@@ -26,24 +26,68 @@ class PortalMotoristaController extends Controller
             return redirect()->route('home')->with('error', 'Seu cadastro de motorista ainda não foi concluído.');
         }
 
-        // 1. Viagens ativas (em andamento ou agendadas)
+        // Viagens ativas (em andamento ou agendadas)
         $viagens = Viagem::with(['rota.pontosDeParada', 'veiculo', 'passageiros'])
             ->where('motorista_id', $motorista->id)
             ->where('ativo', true)
             ->orderBy('data_hora_saida', 'asc')
             ->get();
 
-        // 2. Histórico de viagens (finalizadas/inativas)
-        $historico = Viagem::with(['rota', 'veiculo'])
-            ->withCount(['passageiros as embarcados_count' => function ($query) {
-                $query->whereNotNull('passageiros.data_hora_saida');
+        return view('portal_motorista.index', compact('viagens'));
+    }
+
+    /**
+     * Exibe o histórico de viagens finalizadas/inativas com busca e filtros.
+     */
+    public function historico(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user->isMotorista()) {
+            abort(403, 'Usuário não possui o papel de motorista.');
+        }
+
+        $motorista = $user->motorista;
+
+        if (!$motorista) {
+            return redirect()->route('home')->with('error', 'Seu cadastro de motorista ainda não foi concluído.');
+        }
+
+        // Query base para viagens inativas/finalizadas
+        $query = Viagem::with(['rota', 'veiculo'])
+            ->withCount(['passageiros as embarcados_count' => function ($q) {
+                $q->whereNotNull('passageiros.data_hora_saida');
             }])
             ->where('motorista_id', $motorista->id)
-            ->where('ativo', false)
-            ->orderBy('data_hora_chegada', 'desc')
-            ->paginate(10);
+            ->where('ativo', false);
 
-        return view('portal_motorista.index', compact('viagens', 'historico'));
+        // 1. Filtro por Busca (Nome/Descrição da Rota ou Placa/Veículo)
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('rota', function ($qRota) use ($search) {
+                    $qRota->where('descricao', 'like', "%{$search}%");
+                })
+                ->orWhereHas('veiculo', function ($qVeiculo) use ($search) {
+                    $qVeiculo->where('descricao', 'like', "%{$search}%")
+                             ->orWhere('placa', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // 2. Filtro por Data Inicial
+        if ($request->filled('data_inicio')) {
+            $query->whereDate('data_hora_saida', '>=', $request->input('data_inicio'));
+        }
+
+        // 3. Filtro por Data Fim
+        if ($request->filled('data_fim')) {
+            $query->whereDate('data_hora_saida', '<=', $request->input('data_fim'));
+        }
+
+        $historico = $query->orderBy('data_hora_chegada', 'desc')->paginate(10);
+
+        return view('portal_motorista.historico', compact('historico'));
     }
 
     /**

@@ -24,6 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/dashboard', [PassageiroController::class, 'index'])->middleware(['verified'])->name('dashboard');
+    Route::get('/dashboard/historico', [PassageiroController::class, 'historico'])->name('passageiros.historico');
     Route::get('/dashboard/viagens/{viagem}', [PassageiroController::class, 'selecionarPontos'])->name('passageiros.selecionar-pontos');
     Route::post('/dashboard/viagens/{viagem}', [PassageiroController::class, 'salvarPontos'])->name('passageiros.salvar-pontos');
     Route::delete('/dashboard/viagens/{viagem}/cancelar', [PassageiroController::class, 'cancelar'])->name('passageiros.cancelar');
@@ -49,6 +50,7 @@ Route::middleware('auth')->group(function () {
         ->name('portal_motorista.')
         ->group(function () {
             Route::get('/', [PortalMotoristaController::class, 'index'])->name('index');
+            Route::get('/historico', [PortalMotoristaController::class, 'historico'])->name('historico');
             Route::get('/viagens/{viagem}', [PortalMotoristaController::class, 'show'])->name('show');
             Route::post('/viagens/{viagem}/iniciar', [PortalMotoristaController::class, 'iniciar'])->name('iniciar');
             Route::post('/viagens/{viagem}/finalizar', [PortalMotoristaController::class, 'finalizar'])->name('finalizar');

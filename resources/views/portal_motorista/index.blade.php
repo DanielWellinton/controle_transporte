@@ -19,15 +19,24 @@
         </div>
     @endif
 
-    <!-- Card de Cabeçalho / Instrução -->
+    <!-- Card de Cabeçalho com Acesso ao Histórico -->
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <h2 class="text-base font-bold text-slate-800">Sua Escala de Viagens</h2>
-            <p class="text-xs text-slate-500">Gerencie e acompanhe as rotas atribuídas ao seu veículo.</p>
+            <p class="text-xs text-slate-500 mt-1">Gerencie e acompanhe as rotas atribuídas ao seu veículo.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('portal_motorista.historico') }}" 
+               class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-xl transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Ver Histórico de Viagens</span>
+            </a>
         </div>
     </div>
 
-    <!-- SEÇÃO 1: VIAGENS ATIVAS -->
+    <!-- SEÇÃO: VIAGENS ATIVAS / AGENDADAS -->
     <div class="space-y-4">
         <div class="flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
@@ -66,7 +75,7 @@
 
                             <!-- Horário de Saída -->
                             <p class="text-xs font-semibold text-slate-500 mb-4">
-                                Saída: <span class="text-slate-700">{{ \Carbon\Carbon::parse($viagem->data_hora_saida)->format('d/m/Y H:i') }}</span>
+                                Saída: <span class="text-slate-700">{{ $viagem->data_hora_saida ? \Carbon\Carbon::parse($viagem->data_hora_saida)->format('d/m/Y H:i') : '-' }}</span>
                             </p>
 
                             <!-- Detalhes do Veículo -->
@@ -75,7 +84,7 @@
                                     <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                                     </svg>
-                                    <span>Veículo: <strong class="text-slate-800">{{ $viagem->veiculo->descricao ?? $viagem->veiculo->descricao ?? 'N/A' }} ({{ $viagem->veiculo->placa ?? '-' }})</strong></span>
+                                    <span>Veículo: <strong class="text-slate-800">{{ $viagem->veiculo->descricao ?? 'N/A' }} ({{ $viagem->veiculo->placa ?? '-' }})</strong></span>
                                 </div>
                             </div>
                         </div>
@@ -110,78 +119,6 @@
                     </div>
                 @endforeach
             </div>
-        @endif
-    </div>
-
-    <!-- SEÇÃO 2: HISTÓRICO DE VIAGENS -->
-    <div class="space-y-4 pt-4 border-t border-slate-200">
-        <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block"></span>
-            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Histórico de Viagens (Finalizadas)</h3>
-        </div>
-
-        @if(!isset($historico) || $historico->isEmpty())
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
-                <p class="text-xs text-slate-500">Nenhum registro no histórico de viagens encerradas.</p>
-            </div>
-        @else
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach($historico as $viagemFinalizada)
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between overflow-hidden opacity-90 hover:opacity-100 transition">
-                        <div class="p-6">
-                            <!-- Badges de Status -->
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                                    Encerrada
-                                </span>
-                                <span class="text-xs font-bold text-slate-500">
-                                    Embarques: {{ $viagemFinalizada->embarcados_count ?? $viagemFinalizada->passageiros->count() }}
-                                </span>
-                            </div>
-
-                            <!-- Título da Rota -->
-                            <h4 class="text-base font-bold text-slate-800 mb-1">
-                                {{ $viagemFinalizada->rota->descricao ?? $viagemFinalizada->rota->nome ?? 'Rota não informada' }}
-                            </h4>
-
-                            <!-- Datas de Saída e Chegada -->
-                            <div class="space-y-1 mb-4 text-xs font-semibold text-slate-500">
-                                <p>Saída: <span class="text-slate-700">{{ $viagemFinalizada->data_hora_saida ? \Carbon\Carbon::parse($viagemFinalizada->data_hora_saida)->format('d/m/Y H:i') : '-' }}</span></p>
-                                <p>Chegada: <span class="text-slate-700">{{ $viagemFinalizada->data_hora_chegada ? \Carbon\Carbon::parse($viagemFinalizada->data_hora_chegada)->format('d/m/Y H:i') : '-' }}</span></p>
-                            </div>
-
-                            <!-- Detalhes do Veículo -->
-                            <div class="space-y-2.5 border-t border-slate-100 pt-4 text-xs text-slate-600">
-                                <div class="flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                    </svg>
-                                    <span>Veículo: <strong class="text-slate-800">{{ $viagemFinalizada->veiculo->descricao ?? $viagemFinalizada->veiculo->descricao ?? 'N/A' }} ({{ $viagemFinalizada->veiculo->placa ?? '-' }})</strong></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Botão para Detalhes / Consulta -->
-                        <div class="p-6 pt-0 space-y-2.5 mt-auto">
-                            <a href="{{ route('portal_motorista.show', $viagemFinalizada->id) }}"
-                                class="w-full inline-flex justify-center items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition">
-                                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                <span>Ver Detalhes do Trajeto</span>
-                            </a>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-
-            <!-- Paginação do Histórico (se utilizar paginate() no Controller) -->
-            @if(method_exists($historico, 'links'))
-                <div class="pt-4">
-                    {{ $historico->links() }}
-                </div>
-            @endif
         @endif
     </div>
 
