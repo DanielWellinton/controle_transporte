@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ponto-de-paradas', function (Blueprint $table) {
+        Schema::create('ponto_de_paradas', function (Blueprint $table) {
             $table->id();
             $table->string('descricao');
             
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ponto-de-paradas');
+        Schema::dropIfExists('ponto_de_paradas');
     }
 };
