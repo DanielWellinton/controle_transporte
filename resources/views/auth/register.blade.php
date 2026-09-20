@@ -1,52 +1,90 @@
-<x-guest-layout>
-    <form method="POST" action="{{ route('register') }}">
-        @csrf
+@extends('layouts.auth')
 
-        <!-- Name -->
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
-        </div>
+@section('title', 'Criar Conta')
 
-        <!-- Email Address -->
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+@section('content')
+<div class="text-center mb-6">
+    <h2 class="text-base font-bold text-slate-800">Criar Nova Conta</h2>
+    <p class="text-xs text-slate-500 mt-1">Preencha os dados abaixo para se cadastrar.</p>
+</div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+<form method="POST" action="{{ route('register') }}" class="space-y-4">
+    @csrf
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="new-password" />
+    <!-- Name -->
+    <div>
+        <label for="name" class="block text-xs font-semibold text-slate-600 mb-1">Nome Completo</label>
+        <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name"
+               class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800"
+               placeholder="Seu nome completo">
+        @error('name')
+            <span class="text-rose-600 text-[11px] mt-1 block">{{ $message }}</span>
+        @enderror
+    </div>
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+    <!-- Email Address -->
+    <div>
+        <label for="email" class="block text-xs font-semibold text-slate-600 mb-1">E-mail</label>
+        <input id="email" type="email" name="email" value="{{ old('email') }}" required autocomplete="username"
+               class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800"
+               placeholder="seu.email@exemplo.com">
+        @error('email')
+            <span class="text-rose-600 text-[11px] mt-1 block">{{ $message }}</span>
+        @enderror
+    </div>
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+    <!-- Data de Nascimento -->
+    <div>
+        <label for="data_nascimento" class="block text-xs font-semibold text-slate-600 mb-1">Data de Nascimento</label>
+        <input id="data_nascimento" type="date" name="data_nascimento" value="{{ old('data_nascimento') }}" required
+               class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800">
+        @error('data_nascimento')
+            <span class="text-rose-600 text-[11px] mt-1 block">{{ $message }}</span>
+        @enderror
+    </div>
 
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                            type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
+    <!-- Telefone -->
+    <div>
+        <label for="telefone" class="block text-xs font-semibold text-slate-600 mb-1">Telefone</label>
+        <input id="telefone" type="text" name="telefone" value="{{ old('telefone') }}" required autocomplete="tel" placeholder="(00) 00000-0000"
+               class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800">
+        @error('telefone')
+            <span class="text-rose-600 text-[11px] mt-1 block">{{ $message }}</span>
+        @enderror
+    </div>
 
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
+    <!-- Password -->
+    <div>
+        <label for="password" class="block text-xs font-semibold text-slate-600 mb-1">Senha</label>
+        <input id="password" type="password" name="password" required autocomplete="new-password" placeholder="••••••••"
+               class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800">
+        @error('password')
+            <span class="text-rose-600 text-[11px] mt-1 block">{{ $message }}</span>
+        @enderror
+    </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('login') }}">
-                {{ __('Already registered?') }}
-            </a>
+    <!-- Confirm Password -->
+    <div>
+        <label for="password_confirmation" class="block text-xs font-semibold text-slate-600 mb-1">Confirmar Senha</label>
+        <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" placeholder="••••••••"
+               class="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-slate-800">
+        @error('password_confirmation')
+            <span class="text-rose-600 text-[11px] mt-1 block">{{ $message }}</span>
+        @enderror
+    </div>
 
-            <x-primary-button class="ms-4">
-                {{ __('Register') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+    <!-- Botão de Ação -->
+    <div class="pt-2">
+        <button type="submit" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition shadow-md shadow-indigo-500/20 flex items-center justify-center">
+            <span>Registrar</span>
+        </button>
+    </div>
+
+    <div class="text-center pt-3 border-t border-slate-100 mt-4">
+        <p class="text-xs text-slate-500">
+            Já possui cadastro? 
+            <a href="{{ route('login') }}" class="font-semibold text-indigo-600 hover:text-indigo-700 underline">Fazer login</a>
+        </p>
+    </div>
+</form>
+@endsection

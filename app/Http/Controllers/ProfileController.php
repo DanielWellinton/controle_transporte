@@ -48,6 +48,15 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        $possuiMotoristaVinculado = $user->motorista()->exists();
+        $possuiViagensComoPassageiro = $user->viagensComoPassageiro()->exists();
+        
+        if ($possuiMotoristaVinculado || $possuiViagensComoPassageiro) {
+            return back()->withErrors([
+                'password' => 'Não é possível excluir sua conta pois existem registros vinculados (como perfil de motorista ou viagens como passageiro).'
+            ], 'userDeletion');
+        }
+
         Auth::logout();
 
         $user->delete();

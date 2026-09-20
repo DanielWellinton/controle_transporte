@@ -33,7 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/rotas/autocomplete', [RotaController::class, 'autocomplete'])->name('rotas.autocomplete');
     Route::get('/motoristas/autocomplete', [MotoristaController::class, 'autocomplete'])->name('motoristas.autocomplete');
     Route::get('/veiculos/autocomplete', [VeiculoController::class, 'autocomplete'])->name('veiculos.autocomplete');
-    Route::get('/pontos/autocomplete', [PontoDeParadaController::class, 'autocomplete'])->name('pontos.autocomplete');
+    Route::get('/rotas/{rota}/pontos/autocomplete', [PontoDeParadaController::class, 'autocomplete'])->name('rotas.pontos.autocomplete');
     
     Route::middleware([CheckAdmin::class])
         ->group(function () {

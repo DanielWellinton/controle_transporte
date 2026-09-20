@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePontoDeParadaRequest;
 use App\Http\Requests\UpdatePontoDeParadaRequest;
 use App\Models\PontoDeParada;
+use App\Models\Rota;
 use Illuminate\Http\Request;
 
 class PontoDeParadaController extends Controller
@@ -66,28 +67,28 @@ class PontoDeParadaController extends Controller
         return redirect()->route('ponto_de_paradas.index')
             ->with('success', 'Ponto de parada removido com sucesso.');
     }
-
-    /**
-     * Retorna os pontos de parada para o componente de Autocomplete via AJAX.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function autocomplete(Request $request)
+    
+    public function autocomplete(Request $request, Rota $rota = null)
     {
         $search = trim($request->get('q', ''));
-
-        // Retorna array vazio caso a busca esteja zerada
+    
         if (empty($search)) {
             return response()->json([]);
         }
-
-        $pontos = PontoDeParada::query()
-            ->where('descricao', 'LIKE', "%{$search}%")
-            ->orderBy('descricao', 'asc')
+    
+        $query = PontoDeParada::query()
+            ->where('descricao', 'LIKE', "%{$search}%");
+    
+        // Se houver uma rota informada, exclui os pontos que já estão vinculados a ela
+        if ($rota) {
+            $idsVinculados = $rota->pontosDeParada()->pluck('ponto_de_parada_id');
+            $query->whereNotIn('id', $idsVinculados);
+        }
+    
+        $pontos = $query->orderBy('descricao', 'asc')
             ->limit(10)
             ->get(['id', 'descricao']);
-
+    
         return response()->json($pontos);
     }
 }

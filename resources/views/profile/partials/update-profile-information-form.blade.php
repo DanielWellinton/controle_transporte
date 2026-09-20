@@ -17,12 +17,14 @@
         @csrf
         @method('patch')
 
+        <!-- Name -->
         <div>
             <x-input-label for="name" :value="__('Name')" />
             <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
             <x-input-error class="mt-2" :messages="$errors->get('name')" />
         </div>
 
+        <!-- Email Address -->
         <div>
             <x-input-label for="email" :value="__('Email')" />
             <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
@@ -45,6 +47,20 @@
                     @endif
                 </div>
             @endif
+        </div>
+
+        <!-- Data de Nascimento -->
+        <div>
+            <x-input-label for="data_nascimento" :value="__('Data de Nascimento')" />
+            <x-text-input id="data_nascimento" name="data_nascimento" type="date" class="mt-1 block w-full" :value="old('data_nascimento', optional($user->data_nascimento)->format('Y-m-d'))" required />
+            <x-input-error class="mt-2" :messages="$errors->get('data_nascimento')" />
+        </div>
+
+        <!-- Telefone -->
+        <div>
+            <x-input-label for="telefone" :value="__('Telefone')" />
+            <x-text-input id="telefone" name="telefone" type="text" class="mt-1 block w-full" :value="old('telefone', $user->telefone)" required autocomplete="tel" placeholder="(00) 00000-0000" />
+            <x-input-error class="mt-2" :messages="$errors->get('telefone')" />
         </div>
 
         <div class="flex items-center gap-4">

@@ -127,7 +127,7 @@
 
                     <!-- Autocomplete: Ponto de Parada -->
                     <div class="relative autocomplete-container" 
-                         data-url="{{ route('pontos.autocomplete') }}"
+                         data-url="{{ route('rotas.pontos.autocomplete', $rota) }}"
                          data-current-id="{{ old('ponto_de_parada_id') }}"
                          data-label-key="descricao">
                         <label for="search_ponto" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
