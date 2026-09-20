@@ -16,25 +16,25 @@ class MotoristaController extends Controller
     public function index(Request $request)
     {
         $query = Motorista::with(['usuario']);
-    
+
         // Filtro por Nome (via relacionamento com Usuario) ou por CNH
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('cnh', 'like', "%{$search}%")
-                  ->orWhereHas('usuario', function($qUser) use ($search) {
-                      $qUser->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('usuario', function ($qUser) use ($search) {
+                        $qUser->where('name', 'like', "%{$search}%");
+                    });
             });
         }
-    
+
         // Filtro por Status (Ativo / Inativo)
         if ($request->filled('status')) {
             $query->where('ativo', $request->input('status'));
         }
-    
+
         $motoristas = $query->paginate(10);
-    
+
         return view('motoristas.index', compact('motoristas'));
     }
 
@@ -45,15 +45,15 @@ class MotoristaController extends Controller
     {
         $usuarios = User::whereHas('papeis', function ($query) {
             $query->where('descricao', 'Motorista')
-                  ->where('papels.ativo', true)
-                  ->where('usuario_papels.ativo', true)
-                  ->where(function ($q) {
-                      $q->whereNull('usuario_papels.data_hora_fim')
+                ->where('papels.ativo', true)
+                ->where('usuario_papels.ativo', true)
+                ->where(function ($q) {
+                    $q->whereNull('usuario_papels.data_hora_fim')
                         ->orWhere('usuario_papels.data_hora_fim', '>', now());
-                  });
+                });
         })
-        ->with(['motorista', 'papeis'])
-        ->get();
+            ->with(['motorista', 'papeis'])
+            ->get();
         return view('motoristas.create', compact('usuarios'));
     }
 
@@ -99,5 +99,40 @@ class MotoristaController extends Controller
     {
         $motorista->delete();
         return redirect()->route('motoristas.index')->with('success', 'Motorista removido com sucesso.');
+    }
+
+    public function autocomplete(Request $request)
+    {
+        $term = $request->query('q');
+        $currentMotoristaId = $request->query('current_id');
+
+        if (!$term) {
+            return response()->json([]);
+        }
+
+        $motoristas = Motorista::query()
+            // Deve trazer motoristas ativos OU o motorista atual da viagem que está sendo editada
+            ->where(function ($q) use ($currentMotoristaId) {
+                $q->where('ativo', true);
+                if ($currentMotoristaId) {
+                    $q->orWhere('id', $currentMotoristaId);
+                }
+            })
+            // Busca por Nome do usuário vinculado ou pelo ID do motorista
+            ->where(function ($q) use ($term) {
+                $q->whereHas('usuario', function ($u) use ($term) {
+                    $u->where('name', 'like', "%{$term}%");
+                })->orWhere('id', $term);
+            })
+            ->with('usuario:id,name')
+            ->limit(8)
+            ->get();
+
+        $dados = $motoristas->map(fn($m) => [
+            'id' => $m->id,
+            'nome' => $m->usuario->name ?? "Motorista #{$m->id}",
+        ]);
+
+        return response()->json($dados);
     }
 }

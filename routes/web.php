@@ -30,7 +30,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/dashboard/viagens/{viagem}/cancelar', [PassageiroController::class, 'cancelar'])->name('passageiros.cancelar');
     Route::get('/dashboard/scanner', [LeitorQrController::class, 'exibirScanner'])->name('passageiros.scanner');
     Route::post('/dashboard/scanner/validar', [LeitorQrController::class, 'validarQrCode'])->name('passageiros.scanner.validar');
-
+    Route::get('/rotas/autocomplete', [RotaController::class, 'autocomplete'])->name('rotas.autocomplete');
+    Route::get('/motoristas/autocomplete', [MotoristaController::class, 'autocomplete'])->name('motoristas.autocomplete');
+    Route::get('/veiculos/autocomplete', [VeiculoController::class, 'autocomplete'])->name('veiculos.autocomplete');
+    Route::get('/pontos/autocomplete', [PontoDeParadaController::class, 'autocomplete'])->name('pontos.autocomplete');
+    
     Route::middleware([CheckAdmin::class])
         ->group(function () {
             Route::resource('users', UserController::class);

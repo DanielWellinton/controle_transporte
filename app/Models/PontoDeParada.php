@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class PontoDeParada extends Model
 {
+
+    protected $table = 'ponto_de_paradas';
+    
     protected $fillable = [
         'descricao',
         'latitude',

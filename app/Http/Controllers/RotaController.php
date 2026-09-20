@@ -81,7 +81,7 @@ class RotaController extends Controller
     public function vincularPonto(Request $request, Rota $rota)
     {
         $validated = $request->validate([
-            'ponto_de_parada_id' => 'required|exists:ponto-de-paradas,id',
+            'ponto_de_parada_id' => 'required|exists:ponto_de_paradas,id',
         ]);
 
         $proximaOrdem = ($rota->pontosDeParada()->max('rota_ponto_de_paradas.ordem') ?? 0) + 1;
@@ -119,5 +119,28 @@ class RotaController extends Controller
 
         return redirect()->route('rotas.edit', $rota)
             ->with('success', 'Ordem e status dos pontos atualizados com sucesso.');
+    }
+
+    public function autocomplete(Request $request)
+    {
+        $term = $request->query('q');
+        $currentRotaId = $request->query('current_id');
+    
+        if (!$term) {
+            return response()->json([]);
+        }
+    
+        $rotas = Rota::query()
+            ->where(function ($q) use ($currentRotaId) {
+                $q->where('ativo', true);
+                if ($currentRotaId) {
+                    $q->orWhere('id', $currentRotaId);
+                }
+            })
+            ->where('descricao', 'like', "%{$term}%")
+            ->limit(8)
+            ->get(['id', 'descricao']);
+    
+        return response()->json($rotas);
     }
 }

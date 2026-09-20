@@ -70,4 +70,30 @@ class VeiculoController extends Controller
         return redirect()->route('veiculos.index')
             ->with('success', 'Veículo removido com sucesso.');
     }
+
+    public function autocomplete(Request $request)
+    {
+        $term = $request->query('q');
+        $currentVeiculoId = $request->query('current_id');
+
+        if (!$term) {
+            return response()->json([]);
+        }
+
+        $veiculos = Veiculo::query()
+            ->where(function ($q) use ($currentVeiculoId) {
+                $q->where('ativo', true);
+                if ($currentVeiculoId) {
+                    $q->orWhere('id', $currentVeiculoId);
+                }
+            })
+            ->where(function ($q) use ($term) {
+                $q->where('descricao', 'like', "%{$term}%")
+                    ->orWhere('placa', 'like', "%{$term}%");
+            })
+            ->limit(8)
+            ->get(['id', 'descricao', 'placa']);
+
+        return response()->json($veiculos);
+    }
 }

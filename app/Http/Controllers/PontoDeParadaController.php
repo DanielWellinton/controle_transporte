@@ -66,4 +66,28 @@ class PontoDeParadaController extends Controller
         return redirect()->route('ponto_de_paradas.index')
             ->with('success', 'Ponto de parada removido com sucesso.');
     }
+
+    /**
+     * Retorna os pontos de parada para o componente de Autocomplete via AJAX.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function autocomplete(Request $request)
+    {
+        $search = trim($request->get('q', ''));
+
+        // Retorna array vazio caso a busca esteja zerada
+        if (empty($search)) {
+            return response()->json([]);
+        }
+
+        $pontos = PontoDeParada::query()
+            ->where('descricao', 'LIKE', "%{$search}%")
+            ->orderBy('descricao', 'asc')
+            ->limit(10)
+            ->get(['id', 'descricao']);
+
+        return response()->json($pontos);
+    }
 }

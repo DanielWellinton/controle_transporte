@@ -28,20 +28,31 @@
         <form action="{{ route('viagems.store') }}" method="POST" class="space-y-6">
             @csrf
 
-            <!-- Seleção da Rota -->
-            <div>
-                <label for="rota_id" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+            <!-- Autocomplete: Rota -->
+            <div class="relative autocomplete-container" 
+                 data-url="{{ route('rotas.autocomplete') }}"
+                 data-label-key="descricao">
+                <label for="search_rota" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
                     Rota <span class="text-rose-500">*</span>
                 </label>
-                <select id="rota_id" name="rota_id" required
-                    class="w-full text-xs font-medium text-slate-800 bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition @error('rota_id') border-rose-500 @enderror">
-                    <option value="">-- Selecione uma Rota --</option>
-                    @foreach($rotas as $rota)
-                        <option value="{{ $rota->id }}" {{ old('rota_id', $viagem->rota_id ?? '') == $rota->id ? 'selected' : '' }}>
-                            {{ $rota->descricao }}
-                        </option>
-                    @endforeach
-                </select>
+                
+                <input type="hidden" name="rota_id" class="autocomplete-id" 
+                       value="{{ old('rota_id', $viagem->rota_id ?? '') }}" required>
+
+                <div class="relative">
+                    <input type="text" id="search_rota" class="autocomplete-search w-full text-xs font-medium text-slate-800 bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 pr-10 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition @error('rota_id') border-rose-500 @enderror"
+                        placeholder="Digite para buscar a rota..."
+                        value="{{ old('rota_nome', $viagem->rota->descricao ?? '') }}"
+                        autocomplete="off">
+
+                    <button type="button" class="autocomplete-clear hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+                        &times;
+                    </button>
+                </div>
+
+                <!-- Lista de Resultados -->
+                <div class="autocomplete-results hidden absolute z-30 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto divide-y divide-slate-100"></div>
+
                 @error('rota_id')
                     <p class="text-xs font-medium text-rose-500 mt-1.5">{{ $message }}</p>
                 @enderror
@@ -49,39 +60,61 @@
 
             <!-- Grid: Motorista e Veículo -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Motorista -->
-                <div>
-                    <label for="motorista_id" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                
+                <!-- Autocomplete: Motorista -->
+                <div class="relative autocomplete-container" 
+                     data-url="{{ route('motoristas.autocomplete') }}"
+                     data-label-key="nome">
+                    <label for="search_motorista" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
                         Motorista <span class="text-rose-500">*</span>
                     </label>
-                    <select id="motorista_id" name="motorista_id" required
-                        class="w-full text-xs font-medium text-slate-800 bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition @error('motorista_id') border-rose-500 @enderror">
-                        <option value="">-- Selecione um Motorista --</option>
-                        @foreach($motoristas as $motorista)
-                            <option value="{{ $motorista->id }}" {{ old('motorista_id', $viagem->motorista_id ?? '') == $motorista->id ? 'selected' : '' }}>
-                                {{ $motorista->usuario->name ?? $motorista->nome ?? 'Motorista #'.$motorista->id }}
-                            </option>
-                        @endforeach
-                    </select>
+
+                    <input type="hidden" name="motorista_id" class="autocomplete-id" 
+                           value="{{ old('motorista_id', $viagem->motorista_id ?? '') }}" required>
+
+                    <div class="relative">
+                        <input type="text" id="search_motorista" class="autocomplete-search w-full text-xs font-medium text-slate-800 bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 pr-10 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition @error('motorista_id') border-rose-500 @enderror"
+                            placeholder="Digite o nome do motorista..."
+                            value="{{ old('motorista_nome', $viagem->motorista->usuario->name ?? '') }}"
+                            autocomplete="off">
+
+                        <button type="button" class="autocomplete-clear hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+                            &times;
+                        </button>
+                    </div>
+
+                    <div class="autocomplete-results hidden absolute z-30 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto divide-y divide-slate-100"></div>
+
                     @error('motorista_id')
                         <p class="text-xs font-medium text-rose-500 mt-1.5">{{ $message }}</p>
                     @enderror
                 </div>
 
-                <!-- Veículo -->
-                <div>
-                    <label for="veiculo_id" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                <!-- Autocomplete: Veículo -->
+                <div class="relative autocomplete-container" 
+                     data-url="{{ route('veiculos.autocomplete') }}"
+                     data-label-key="descricao"
+                     data-sublabel-key="placa">
+                    <label for="search_veiculo" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
                         Veículo <span class="text-rose-500">*</span>
                     </label>
-                    <select id="veiculo_id" name="veiculo_id" required
-                        class="w-full text-xs font-medium text-slate-800 bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition @error('veiculo_id') border-rose-500 @enderror">
-                        <option value="">-- Selecione um Veículo --</option>
-                        @foreach($veiculos as $veiculo)
-                            <option value="{{ $veiculo->id }}" {{ old('veiculo_id', $viagem->veiculo_id ?? '') == $veiculo->id ? 'selected' : '' }}>
-                                {{ $veiculo->descricao ?? $veiculo->descricao }} ({{ $veiculo->placa }})
-                            </option>
-                        @endforeach
-                    </select>
+
+                    <input type="hidden" name="veiculo_id" class="autocomplete-id" 
+                           value="{{ old('veiculo_id', $viagem->veiculo_id ?? '') }}" required>
+
+                    <div class="relative">
+                        <input type="text" id="search_veiculo" class="autocomplete-search w-full text-xs font-medium text-slate-800 bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 pr-10 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition @error('veiculo_id') border-rose-500 @enderror"
+                            placeholder="Buscar por nome ou placa..."
+                            value="{{ old('veiculo_nome', isset($viagem->veiculo) ? $viagem->veiculo->descricao . ' (' .$viagem->veiculo->placa . ')' : '') }}"
+                            autocomplete="off">
+
+                        <button type="button" class="autocomplete-clear hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+                            &times;
+                        </button>
+                    </div>
+
+                    <div class="autocomplete-results hidden absolute z-30 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto divide-y divide-slate-100"></div>
+
                     @error('veiculo_id')
                         <p class="text-xs font-medium text-rose-500 mt-1.5">{{ $message }}</p>
                     @enderror
@@ -98,9 +131,8 @@
                     @php
                         $valSaida = old('data_hora_saida');
                         if (!$valSaida && isset($viagem->data_hora_saida)) {
-                            $valSaida = $viagem->data_hora_saida instanceof \Carbon\Carbon
-                                ? $viagem->data_hora_saida->format('Y-m-d\TH:i')
-                                : \Carbon\Carbon::parse($viagem->data_hora_saida)->format('Y-m-d\TH:i');
+                            $valSaida =$viagem->data_hora_saida instanceof \Carbon\Carbon
+                                ? $viagem->data_hora_saida->format('Y-m-d\TH:i')                                 : \Carbon\Carbon::parse($viagem->data_hora_saida)->format('Y-m-d\TH:i');
                         }
                     @endphp
                     <input type="datetime-local" id="data_hora_saida" name="data_hora_saida" 
@@ -119,9 +151,8 @@
                     @php
                         $valChegada = old('data_hora_chegada');
                         if (!$valChegada && isset($viagem->data_hora_chegada)) {
-                            $valChegada = $viagem->data_hora_chegada instanceof \Carbon\Carbon
-                                ? $viagem->data_hora_chegada->format('Y-m-d\TH:i')
-                                : \Carbon\Carbon::parse($viagem->data_hora_chegada)->format('Y-m-d\TH:i');
+                            $valChegada =$viagem->data_hora_chegada instanceof \Carbon\Carbon
+                                ? $viagem->data_hora_chegada->format('Y-m-d\TH:i')                                 : \Carbon\Carbon::parse($viagem->data_hora_chegada)->format('Y-m-d\TH:i');
                         }
                     @endphp
                     <input type="datetime-local" id="data_hora_chegada" name="data_hora_chegada" 
@@ -160,4 +191,102 @@
     </div>
 
 </div>
+
+<!-- Script Vanilla Reutilizável de Autocomplete -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const containers = document.querySelectorAll('.autocomplete-container');
+
+    containers.forEach(container => {
+        const url = container.dataset.url;
+        const labelKey = container.dataset.labelKey;
+        const sublabelKey = container.dataset.sublabelKey;
+
+        const searchInput = container.querySelector('.autocomplete-search');
+        const hiddenIdInput = container.querySelector('.autocomplete-id');
+        const resultsContainer = container.querySelector('.autocomplete-results');
+        const clearBtn = container.querySelector('.autocomplete-clear');
+
+        let debounceTimer = null;
+
+        // Mostra botão de limpar se houver valor inicial
+        if (searchInput.value.trim() !== '') {
+            clearBtn.classList.remove('hidden');
+        }
+
+        searchInput.addEventListener('input', function () {
+            const query = this.value.trim();
+            hiddenIdInput.value = ''; // Limpa o ID até selecionar da lista
+
+            if (query.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+                resultsContainer.classList.add('hidden');
+                return;
+            }
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                fetch(`${url}?q=${encodeURIComponent(query)}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    resultsContainer.innerHTML = '';
+
+                    if (!Array.isArray(data) || data.length === 0) {
+                        resultsContainer.innerHTML = `
+                            <div class="p-3 text-xs text-slate-400 text-center">
+                                Nenhum resultado encontrado.
+                            </div>`;
+                    } else {
+                        data.forEach(item => {
+                            const option = document.createElement('div');
+                            option.className = 'p-3 hover:bg-indigo-50 cursor-pointer transition flex flex-col gap-0.5 text-xs text-slate-700';
+
+                            const primaryText = item[labelKey] ?? '';
+                            const secondaryText = sublabelKey && item[sublabelKey] ? ` (${item[sublabelKey]})` : '';
+
+                            option.innerHTML = `
+                                <span class="font-bold text-slate-800">${primaryText}${secondaryText}</span>
+                            `;
+
+                            option.addEventListener('click', function () {
+                                searchInput.value = `${primaryText}${secondaryText}`;
+                                hiddenIdInput.value = item.id;
+                                resultsContainer.classList.add('hidden');
+                            });
+
+                            resultsContainer.appendChild(option);
+                        });
+                    }
+
+                    resultsContainer.classList.remove('hidden');
+                })
+                .catch(err => console.error('Erro na requisição de autocomplete:', err));
+            }, 300);
+        });
+
+        // Limpar seleção ao clicar no 'X'
+        clearBtn.addEventListener('click', function () {
+            searchInput.value = '';
+            hiddenIdInput.value = '';
+            resultsContainer.classList.add('hidden');
+            clearBtn.classList.add('hidden');
+            searchInput.focus();
+        });
+
+        // Fechar a lista caso o usuário clique fora do campo
+        document.addEventListener('click', function (e) {
+            if (!container.contains(e.target)) {
+                resultsContainer.classList.add('hidden');
+            }
+        });
+    });
+});
+</script>
 @endsection

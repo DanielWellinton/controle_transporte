@@ -4,8 +4,9 @@
 @section('header_title', 'Editar Rota')
 
 @section('content')
-<!-- Leaflet CSS carregado diretamente -->
+<!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
 <style>
     /* Previne distorções visuais de marcadores e tiles causadas por resets de imagem do Tailwind */
     .leaflet-container img {
@@ -15,7 +16,7 @@
 </style>
 
 @php
-    $pontosMapeados = $rota->pontosDeParada
+    $pontosMapeados =$rota->pontosDeParada
         ->filter(function($ponto) {
             return (bool)$ponto->pivot->ativo;
         })
@@ -117,24 +118,38 @@
                 </form>
             </div>
 
-            <!-- Card: Vincular Novo Ponto -->
+            <!-- Card: Vincular Novo PONTO DE PARADA (PADRÃO AUTOCOMPLETE DA OUTRA VIEW) -->
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
                 <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Vincular Novo Ponto de Parada</h3>
 
                 <form action="{{ route('rotas.pontos.store', $rota) }}" method="POST" class="space-y-4">
                     @csrf
 
-                    <div>
-                        <label for="ponto_de_parada_id" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Selecione um Ponto</label>
-                        <select id="ponto_de_parada_id" name="ponto_de_parada_id" required
-                            class="w-full rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 text-sm focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 transition-colors shadow-sm px-3 py-2">
-                            <option value="">-- Escolha um ponto --</option>
-                            @foreach($pontosDisponiveis as $ponto)
-                                <option value="{{ $ponto->id }}">
-                                    {{ $ponto->descricao }} (Lat: {{ $ponto->latitude }}, Long: {{ $ponto->longitude }})
-                                </option>
-                            @endforeach
-                        </select>
+                    <!-- Autocomplete: Ponto de Parada -->
+                    <div class="relative autocomplete-container" 
+                         data-url="{{ route('pontos.autocomplete') }}"
+                         data-current-id="{{ old('ponto_de_parada_id') }}"
+                         data-label-key="descricao">
+                        <label for="search_ponto" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                            Ponto de Parada <span class="text-rose-500">*</span>
+                        </label>
+                        
+                        <input type="hidden" name="ponto_de_parada_id" class="autocomplete-id" 
+                               value="{{ old('ponto_de_parada_id') }}" required>
+
+                        <div class="relative">
+                            <input type="text" id="search_ponto" class="autocomplete-search w-full rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 text-sm focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 transition-colors shadow-sm px-3 py-2.5 pr-10 @error('ponto_de_parada_id') border-rose-500 @enderror"
+                                placeholder="Digite para buscar um ponto..."
+                                value="{{ old('ponto_nome', '') }}"
+                                autocomplete="off">
+
+                            <button type="button" class="autocomplete-clear hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+                                &times;
+                            </button>
+                        </div>
+
+                        <div class="autocomplete-results hidden absolute z-30 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto divide-y divide-slate-100"></div>
+
                         @error('ponto_de_parada_id')
                             <p class="text-xs text-rose-600 font-medium mt-1">{{ $message }}</p>
                         @enderror
@@ -238,7 +253,7 @@
                                     {{ $ponto->pivot->ativo ? 'checked' : '' }}>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right">
-                                <form action="{{ route('rotas.pontos.destroy', [$rota, $ponto]) }}" method="POST" class="inline-block" onsubmit="return confirm('Deseja desvincular este ponto da rota?');">
+                                <form action="{{ route('rotas.pontos.destroy', [$rota,$ponto]) }}" method="POST" class="inline-block" onsubmit="return confirm('Deseja desvincular este ponto da rota?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-lg transition cursor-pointer">
@@ -272,158 +287,252 @@
 
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
-<!-- SortableJS CDN -->
+<!-- SortableJS -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const mapElement = document.getElementById('map');
-        const distanciaInfo = document.getElementById('distancia-info');
-        const tbody = document.getElementById('sortable-pontos');
-        if (!mapElement) return;
+document.addEventListener('DOMContentLoaded', function () {
+    // ----------------------------------------------------
+    // SCRIPT DE AUTOCOMPLETE REUTILIZADO (IDÊNTICO À OUTRA VIEW)
+    // ----------------------------------------------------
+    const containers = document.querySelectorAll('.autocomplete-container');
 
-        // Redefinição de URLs para evitar marcadores quebrados
-        delete L.Icon.Default.prototype._getIconUrl;
-        L.Icon.Default.mergeOptions({
-            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    containers.forEach(container => {
+        const baseUrl = container.dataset.url;
+        const currentId = container.dataset.currentId || '';
+        const labelKey = container.dataset.labelKey;
+        const sublabelKey = container.dataset.sublabelKey;
+
+        const searchInput = container.querySelector('.autocomplete-search');
+        const hiddenIdInput = container.querySelector('.autocomplete-id');
+        const resultsContainer = container.querySelector('.autocomplete-results');
+        const clearBtn = container.querySelector('.autocomplete-clear');
+
+        let debounceTimer = null;
+
+        if (searchInput.value.trim() !== '') {
+            clearBtn.classList.remove('hidden');
+        }
+
+        function executarBusca() {
+            const query = searchInput.value.trim();
+
+            if (query.length === 0) {
+                hiddenIdInput.value = '';
+                clearBtn.classList.add('hidden');
+                resultsContainer.classList.add('hidden');
+                return;
+            }
+
+            clearBtn.classList.remove('hidden');
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const fetchUrl = `${baseUrl}?q=${encodeURIComponent(query)}&current_id=${encodeURIComponent(currentId)}`;
+
+                fetch(fetchUrl, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    resultsContainer.innerHTML = '';
+
+                    if (!Array.isArray(data) || data.length === 0) {
+                        resultsContainer.innerHTML = `
+                            <div class="p-3 text-xs text-slate-400 text-center">
+                                Nenhum resultado encontrado.
+                            </div>`;
+                    } else {
+                        data.forEach(item => {
+                            const option = document.createElement('div');
+                            option.className = 'p-3 hover:bg-indigo-50 cursor-pointer transition flex flex-col gap-0.5 text-xs text-slate-700';
+
+                            const primaryText = item[labelKey] ?? '';
+                            const secondaryText = sublabelKey && item[sublabelKey] ? ` (${item[sublabelKey]})` : '';
+
+                            option.innerHTML = `
+                                <span class="font-bold text-slate-800">${primaryText}${secondaryText}</span>
+                            `;
+
+                            option.addEventListener('click', function () {
+                                searchInput.value = `${primaryText}${secondaryText}`;
+                                hiddenIdInput.value = item.id;
+                                resultsContainer.classList.add('hidden');
+                            });
+
+                            resultsContainer.appendChild(option);
+                        });
+                    }
+
+                    resultsContainer.classList.remove('hidden');
+                })
+                .catch(err => console.error('Erro na busca de autocomplete:', err));
+            }, 300);
+        }
+
+        searchInput.addEventListener('input', executarBusca);
+
+        clearBtn.addEventListener('click', function () {
+            searchInput.value = '';
+            hiddenIdInput.value = '';
+            resultsContainer.classList.add('hidden');
+            clearBtn.classList.add('hidden');
+            searchInput.focus();
         });
 
-        const defaultLat = -23.550520;
-        const defaultLng = -46.633309;
-
-        // Inicializa Mapa
-        const map = L.map('map').setView([defaultLat, defaultLng], 13);
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap'
-        }).addTo(map);
-
-        let currentMarkers = [];
-        let currentPolyline = null;
-
-        // Extrai pontos ativos na tabela em ordem visual
-        function getPontosDoDOM() {
-            if (!tbody) return [];
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            const pontos = [];
-
-            rows.forEach((row, index) => {
-                const ativoInput = row.querySelector('.input-ativo');
-                if (ativoInput && ativoInput.checked) {
-                    pontos.push({
-                        id: row.dataset.pontoId,
-                        descricao: row.dataset.descricao,
-                        lat: parseFloat(row.dataset.lat),
-                        lng: parseFloat(row.dataset.lng),
-                        ordem: index + 1
-                    });
-                }
-            });
-
-            return pontos;
-        }
-
-        // Redesenha Marcadores e Polinha (OSRM)
-        function renderizarRota() {
-            const pontos = getPontosDoDOM();
-
-            currentMarkers.forEach(m => map.removeLayer(m));
-            currentMarkers = [];
-            if (currentPolyline) {
-                map.removeLayer(currentPolyline);
-                currentPolyline = null;
+        document.addEventListener('click', function (e) {
+            if (!container.contains(e.target)) {
+                resultsContainer.classList.add('hidden');
             }
-
-            if (distanciaInfo) {
-                distanciaInfo.classList.add('hidden');
-            }
-
-            if (pontos.length === 0) return;
-
-            pontos.forEach((ponto, index) => {
-                const customIcon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div style="background-color: #4f46e5; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${index + 1}</div>`,
-                    iconSize: [28, 28],
-                    iconAnchor: [14, 14]
-                });
-
-                const marker = L.marker([ponto.lat, ponto.lng], { icon: customIcon })
-                    .addTo(map)
-                    .bindPopup(`<b>Parada ${index + 1}: ${ponto.descricao}</b>`);
-
-                currentMarkers.push(marker);
-            });
-
-            if (pontos.length >= 2) {
-                const coordinatesStr = pontos.map(p => `${p.lng},${p.lat}`).join(';');
-                const url = `https://router.project-osrm.org/route/v1/driving/${coordinatesStr}?overview=full&geometries=geojson`;
-
-                fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.routes && data.routes.length > 0) {
-                            const route = data.routes[0];
-                            const routeCoordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
-
-                            currentPolyline = L.polyline(routeCoordinates, {
-                                color: '#4f46e5',
-                                weight: 5,
-                                opacity: 0.8
-                            }).addTo(map);
-
-                            map.fitBounds(currentPolyline.getBounds(), { padding: [30, 30] });
-
-                            if (distanciaInfo) {
-                                const distanciaKm = (route.distance / 1000).toFixed(1);
-                                distanciaInfo.textContent = `Distância Total: ${distanciaKm} km`;
-                                distanciaInfo.classList.remove('hidden');
-                            }
-                        }
-                    })
-                    .catch(err => console.error("Erro ao carregar rota OSRM:", err));
-            } else {
-                map.setView([pontos[0].lat, pontos[0].lng], 15);
-            }
-        }
-
-        // Atualiza a numeração sequencial dos inputs readonly
-        function atualizarInputsOrdem() {
-            if (!tbody) return;
-            const rows = tbody.querySelectorAll('tr');
-            rows.forEach((row, index) => {
-                const inputOrdem = row.querySelector('.input-ordem');
-                if (inputOrdem) {
-                    inputOrdem.value = index + 1;
-                }
-            });
-        }
-
-        renderizarRota();
-
-        // Configuração do SortableJS
-        if (tbody) {
-            Sortable.create(tbody, {
-                handle: '.drag-handle',
-                animation: 150,
-                ghostClass: 'bg-indigo-50',
-                onEnd: function () {
-                    atualizarInputsOrdem();
-                    renderizarRota();
-                }
-            });
-
-            tbody.addEventListener('change', function (e) {
-                if (e.target.classList.contains('input-ativo')) {
-                    renderizarRota();
-                }
-            });
-        }
-
-        setTimeout(() => map.invalidateSize(), 300);
+        });
     });
+
+    // ----------------------------------------------------
+    // SCRIPT DO LEAFLET E SORTABLEJS
+    // ----------------------------------------------------
+    const mapElement = document.getElementById('map');
+    const distanciaInfo = document.getElementById('distancia-info');
+    const tbody = document.getElementById('sortable-pontos');
+    if (!mapElement) return;
+
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    });
+
+    const defaultLat = -23.550520;
+    const defaultLng = -46.633309;
+
+    const map = L.map('map').setView([defaultLat, defaultLng], 13);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    let currentMarkers = [];
+    let currentPolyline = null;
+
+    function getPontosDoDOM() {
+        if (!tbody) return [];
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const pontos = [];
+
+        rows.forEach((row, index) => {
+            const ativoInput = row.querySelector('.input-ativo');
+            if (ativoInput && ativoInput.checked) {
+                pontos.push({
+                    id: row.dataset.pontoId,
+                    descricao: row.dataset.descricao,
+                    lat: parseFloat(row.dataset.lat),
+                    lng: parseFloat(row.dataset.lng),
+                    ordem: index + 1
+                });
+            }
+        });
+
+        return pontos;
+    }
+
+    function renderizarRota() {
+        const pontos = getPontosDoDOM();
+
+        currentMarkers.forEach(m => map.removeLayer(m));
+        currentMarkers = [];
+        if (currentPolyline) {
+            map.removeLayer(currentPolyline);
+            currentPolyline = null;
+        }
+
+        if (distanciaInfo) {
+            distanciaInfo.classList.add('hidden');
+        }
+
+        if (pontos.length === 0) return;
+
+        pontos.forEach((ponto, index) => {
+            const customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color: #4f46e5; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${index + 1}</div>`,
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            });
+
+            const marker = L.marker([ponto.lat, ponto.lng], { icon: customIcon })
+                .addTo(map)
+                .bindPopup(`<b>Parada ${index + 1}: ${ponto.descricao}</b>`);
+
+            currentMarkers.push(marker);
+        });
+
+        if (pontos.length >= 2) {
+            const coordinatesStr = pontos.map(p => `${p.lng},${p.lat}`).join(';');
+            const url = `https://router.project-osrm.org/route/v1/driving/${coordinatesStr}?overview=full&geometries=geojson`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.routes && data.routes.length > 0) {
+                        const route = data.routes[0];
+                        const routeCoordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+
+                        currentPolyline = L.polyline(routeCoordinates, {
+                            color: '#4f46e5',
+                            weight: 5,
+                            opacity: 0.8
+                        }).addTo(map);
+
+                        map.fitBounds(currentPolyline.getBounds(), { padding: [30, 30] });
+
+                        if (distanciaInfo) {
+                            const distanciaKm = (route.distance / 1000).toFixed(1);
+                            distanciaInfo.textContent = `Distância Total: ${distanciaKm} km`;
+                            distanciaInfo.classList.remove('hidden');
+                        }
+                    }
+                })
+                .catch(err => console.error("Erro ao carregar rota OSRM:", err));
+        } else {
+            map.setView([pontos[0].lat, pontos[0].lng], 15);
+        }
+    }
+
+    function atualizarInputsOrdem() {
+        if (!tbody) return;
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach((row, index) => {
+            const inputOrdem = row.querySelector('.input-ordem');
+            if (inputOrdem) {
+                inputOrdem.value = index + 1;
+            }
+        });
+    }
+
+    renderizarRota();
+
+    if (tbody) {
+        Sortable.create(tbody, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'bg-indigo-50',
+            onEnd: function () {
+                atualizarInputsOrdem();
+                renderizarRota();
+            }
+        });
+
+        tbody.addEventListener('change', function (e) {
+            if (e.target.classList.contains('input-ativo')) {
+                renderizarRota();
+            }
+        });
+    }
+
+    setTimeout(() => map.invalidateSize(), 300);
+});
 </script>
 @endsection
