@@ -45,7 +45,7 @@ class PassageiroController extends Controller
             [
                 'ponto_de_parada_saida_id'   => $validated['ponto_de_parada_saida_id'],
                 'ponto_de_parada_chegada_id' => $validated['ponto_de_parada_chegada_id'],
-                'data_hora_saida'            => now(),
+                'data_hora_saida'            => null,
             ]
         );
 

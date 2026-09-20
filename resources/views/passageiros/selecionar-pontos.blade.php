@@ -192,7 +192,7 @@ $pontosAtivos = optional($viagem->rota)->pontosDeParada
 
             <!-- Dados Adicionais -->
             <div class="pt-4 border-t border-slate-100 text-xs text-slate-500 space-y-1">
-                <p><strong>Veículo:</strong> {{ $viagem->veiculo->modelo ?? 'N/A' }} ({{ $viagem->veiculo->placa ?? 'Sem placa' }})</p>
+                <p><strong>Veículo:</strong> {{ $viagem->veiculo->descricao ?? 'N/A' }} ({{ $viagem->veiculo->placa ?? 'Sem placa' }})</p>
                 <p><strong>Motorista:</strong> {{ $viagem->motorista->usuario->name ?? 'Não definido' }}</p>
             </div>
         </div>

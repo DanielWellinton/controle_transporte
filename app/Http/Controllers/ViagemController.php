@@ -41,9 +41,9 @@ class ViagemController extends Controller
     public function show(Viagem $viagem)
     {
         $viagem->load([
-            'rota.pontosDeParada', 
-            'motorista', 
-            'veiculo', 
+            'rota.pontosDeParada',
+            'motorista',
+            'veiculo',
             'passageiros'
         ]);
 
@@ -73,5 +73,27 @@ class ViagemController extends Controller
 
         return redirect()->route('viagems.index')
             ->with('success', 'Viagem excluída com sucesso!');
+    }
+
+    /**
+     * Abre o formulário de criação pré-preenchido com os dados de uma viagem existente.
+     */
+    public function duplicate(Viagem $viagem)
+    {
+        $viagemDuplicada = $viagem->replicate();
+
+        $viagemDuplicada->data_hora_saida = null;
+        $viagemDuplicada->data_hora_chegada = null;
+
+        $rotas = Rota::where('ativo', true)->orWhere('id', $viagem->rota_id)->get();
+        $motoristas = Motorista::where('ativo', true)->orWhere('id', $viagem->motorista_id)->get();
+        $veiculos = Veiculo::where('ativo', true)->orWhere('id', $viagem->veiculo_id)->get();
+
+        return view('viagems.create', [
+            'viagem' => $viagemDuplicada,
+            'rotas' => $rotas,
+            'motoristas' => $motoristas,
+            'veiculos' => $veiculos,
+        ]);
     }
 }

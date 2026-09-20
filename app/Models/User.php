@@ -70,14 +70,14 @@ class User extends Authenticatable
                     ->exists();
     }
 
-    public function isAdminin(): bool
+    public function isAdmin(): bool
     {
         return $this->temPapel('Admin');
     }
 
     public function isMotorista(): bool
     {
-        return $this->temPapel('Motorista');
+        return $this->temPapel('Motorista') && $this->motorista()->exists();
     }
 
     public function isPassageiro(): bool

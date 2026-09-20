@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('ponto_de_parada_saida_id')->constrained('ponto_de_paradas')->onDelete('cascade');
             $table->foreignId('ponto_de_parada_chegada_id')->nullable()->constrained('ponto_de_paradas')->onDelete('cascade');
 
-            $table->dateTime('data_hora_saida');
+            $table->dateTime('data_hora_saida')->nullable();
             $table->dateTime('data_hora_chegada')->nullable();
 
             $table->primary(['usuario_id', 'viagem_id']);

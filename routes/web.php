@@ -9,6 +9,7 @@ use App\Http\Controllers\RotaController;
 use App\Http\Controllers\ViagemController;
 use App\Http\Controllers\LeitorQrController;
 use App\Http\Controllers\PortalMotoristaController;
+use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckAdmin;
 use App\Http\Middleware\CheckMotorista;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware([CheckAdmin::class])
         ->group(function () {
+            Route::resource('users', UserController::class);
             Route::resource('motoristas', MotoristaController::class);
             Route::resource('veiculos', VeiculoController::class);
             Route::resource('ponto-de-paradas', PontoDeParadaController::class)->names('ponto_de_paradas');
@@ -39,6 +41,7 @@ Route::middleware('auth')->group(function () {
             Route::put('rotas/{rota}/pontos', [RotaController::class, 'atualizarPontos'])->name('rotas.pontos.update');
             Route::delete('rotas/{rota}/pontos/{pontoDeParada}', [RotaController::class, 'desvincularPonto'])->name('rotas.pontos.destroy');
             Route::resource('viagems', ViagemController::class);
+            Route::get('viagems/{viagem}/duplicate', [ViagemController::class, 'duplicate'])->name('viagems.duplicate');
         });
 
     Route::middleware([CheckMotorista::class])

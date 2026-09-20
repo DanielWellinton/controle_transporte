@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Agendar Viagem')
-@section('header_title', 'Agendar Nova Viagem')
+@section('title', isset($viagem) ? 'Duplicar Viagem' : 'Agendar Viagem')
+@section('header_title', isset($viagem) ? 'Duplicar Viagem Existente' : 'Agendar Nova Viagem')
 
 @section('content')
 <div class="max-w-4xl mx-auto space-y-6">
@@ -14,8 +14,12 @@
                     &larr; Voltar para Viagens
                 </a>
             </div>
-            <h2 class="text-base font-bold text-slate-800 mt-1">Agendar Nova Viagem</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Preencha os dados operacionais para cadastrar o manifesto da viagem.</p>
+            <h2 class="text-base font-bold text-slate-800 mt-1">
+                {{ isset($viagem) ? 'Duplicar Viagem' : 'Agendar Nova Viagem' }}
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+                {{ isset($viagem) ? 'Ajuste os dados conforme necessário para criar a nova viagem com base na selecionada.' : 'Preencha os dados operacionais para cadastrar o manifesto da viagem.' }}
+            </p>
         </div>
     </div>
 
@@ -33,7 +37,7 @@
                     class="w-full text-xs font-medium text-slate-800 bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition @error('rota_id') border-rose-500 @enderror">
                     <option value="">-- Selecione uma Rota --</option>
                     @foreach($rotas as $rota)
-                        <option value="{{ $rota->id }}" {{ old('rota_id') == $rota->id ? 'selected' : '' }}>
+                        <option value="{{ $rota->id }}" {{ old('rota_id', $viagem->rota_id ?? '') == $rota->id ? 'selected' : '' }}>
                             {{ $rota->descricao }}
                         </option>
                     @endforeach
@@ -54,7 +58,7 @@
                         class="w-full text-xs font-medium text-slate-800 bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition @error('motorista_id') border-rose-500 @enderror">
                         <option value="">-- Selecione um Motorista --</option>
                         @foreach($motoristas as $motorista)
-                            <option value="{{ $motorista->id }}" {{ old('motorista_id') == $motorista->id ? 'selected' : '' }}>
+                            <option value="{{ $motorista->id }}" {{ old('motorista_id', $viagem->motorista_id ?? '') == $motorista->id ? 'selected' : '' }}>
                                 {{ $motorista->usuario->name ?? $motorista->nome ?? 'Motorista #'.$motorista->id }}
                             </option>
                         @endforeach
@@ -73,8 +77,8 @@
                         class="w-full text-xs font-medium text-slate-800 bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition @error('veiculo_id') border-rose-500 @enderror">
                         <option value="">-- Selecione um Veículo --</option>
                         @foreach($veiculos as $veiculo)
-                            <option value="{{ $veiculo->id }}" {{ old('veiculo_id') == $veiculo->id ? 'selected' : '' }}>
-                                {{ $veiculo->descricao ?? $veiculo->modelo }} ({{ $veiculo->placa }})
+                            <option value="{{ $veiculo->id }}" {{ old('veiculo_id', $viagem->veiculo_id ?? '') == $veiculo->id ? 'selected' : '' }}>
+                                {{ $veiculo->descricao ?? $veiculo->descricao }} ({{ $veiculo->placa }})
                             </option>
                         @endforeach
                     </select>
@@ -91,8 +95,16 @@
                     <label for="data_hora_saida" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
                         Data e Hora de Saída <span class="text-rose-500">*</span>
                     </label>
+                    @php
+                        $valSaida = old('data_hora_saida');
+                        if (!$valSaida && isset($viagem->data_hora_saida)) {
+                            $valSaida = $viagem->data_hora_saida instanceof \Carbon\Carbon
+                                ? $viagem->data_hora_saida->format('Y-m-d\TH:i')
+                                : \Carbon\Carbon::parse($viagem->data_hora_saida)->format('Y-m-d\TH:i');
+                        }
+                    @endphp
                     <input type="datetime-local" id="data_hora_saida" name="data_hora_saida" 
-                        value="{{ old('data_hora_saida') }}" required
+                        value="{{ $valSaida }}" required
                         class="w-full text-xs font-medium text-slate-800 bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition @error('data_hora_saida') border-rose-500 @enderror" />
                     @error('data_hora_saida')
                         <p class="text-xs font-medium text-rose-500 mt-1.5">{{ $message }}</p>
@@ -104,8 +116,16 @@
                     <label for="data_hora_chegada" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
                         Data e Hora de Chegada (Prevista)
                     </label>
+                    @php
+                        $valChegada = old('data_hora_chegada');
+                        if (!$valChegada && isset($viagem->data_hora_chegada)) {
+                            $valChegada = $viagem->data_hora_chegada instanceof \Carbon\Carbon
+                                ? $viagem->data_hora_chegada->format('Y-m-d\TH:i')
+                                : \Carbon\Carbon::parse($viagem->data_hora_chegada)->format('Y-m-d\TH:i');
+                        }
+                    @endphp
                     <input type="datetime-local" id="data_hora_chegada" name="data_hora_chegada" 
-                        value="{{ old('data_hora_chegada') }}"
+                        value="{{ $valChegada }}"
                         class="w-full text-xs font-medium text-slate-800 bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition @error('data_hora_chegada') border-rose-500 @enderror" />
                     @error('data_hora_chegada')
                         <p class="text-xs font-medium text-rose-500 mt-1.5">{{ $message }}</p>
@@ -116,7 +136,8 @@
             <!-- Status Ativo/Inativo -->
             <div class="pt-2">
                 <label class="inline-flex items-center gap-3 cursor-pointer group">
-                    <input type="checkbox" id="ativo" name="ativo" value="1" {{ old('ativo', true) ? 'checked' : '' }}
+                    <input type="checkbox" id="ativo" name="ativo" value="1" 
+                        {{ old('ativo', $viagem->ativo ?? true) ? 'checked' : '' }}
                         class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/20 focus:ring-2 transition cursor-pointer">
                     <span class="text-xs font-medium text-slate-700 group-hover:text-slate-900 transition">
                         Viagem Ativa (Disponível para embarque / check-in)

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Viagem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class PortalMotoristaController extends Controller
 {
@@ -16,17 +17,33 @@ class PortalMotoristaController extends Controller
         $user = $request->user();
 
         if (!$user->isMotorista()) {
-            abort(403, 'Usuário não cadastrado como motorista.');
+            abort(403, 'Usuário não possui o papel de motorista.');
         }
+
         $motorista = $user->motorista;
-        // Busca viagens atribuídas ao motorista logado para a data atual (ou futuras)
+
+        if (!$motorista) {
+            return redirect()->route('home')->with('error', 'Seu cadastro de motorista ainda não foi concluído.');
+        }
+
+        // 1. Viagens ativas (em andamento ou agendadas)
         $viagens = Viagem::with(['rota.pontosDeParada', 'veiculo', 'passageiros'])
             ->where('motorista_id', $motorista->id)
             ->where('ativo', true)
             ->orderBy('data_hora_saida', 'asc')
             ->get();
 
-        return view('portal_motorista.index', compact('viagens'));
+        // 2. Histórico de viagens (finalizadas/inativas)
+        $historico = Viagem::with(['rota', 'veiculo'])
+            ->withCount(['passageiros as embarcados_count' => function ($query) {
+                $query->whereNotNull('passageiros.data_hora_saida');
+            }])
+            ->where('motorista_id', $motorista->id)
+            ->where('ativo', false)
+            ->orderBy('data_hora_chegada', 'desc')
+            ->paginate(10);
+
+        return view('portal_motorista.index', compact('viagens', 'historico'));
     }
 
     /**
@@ -37,8 +54,8 @@ class PortalMotoristaController extends Controller
         $this->autorizarMotorista($request, $viagem);
 
         $viagem->load([
-            'rota.pontosDeParada', 
-            'veiculo', 
+            'rota.pontosDeParada',
+            'veiculo',
             'passageiros' => function ($query) {
                 $query->withPivot('ponto_de_parada_saida_id', 'ponto_de_parada_chegada_id', 'data_hora_saida');
             }
@@ -68,9 +85,26 @@ class PortalMotoristaController extends Controller
     {
         $this->autorizarMotorista($request, $viagem);
 
-        $viagem->update([
-            'data_hora_chegada' => now(),
-        ]);
+        DB::transaction(function () use ($viagem) {
+            $agora = now();
+
+            // 1. Inativa e define a hora de encerramento da viagem
+            $viagem->update([
+                'data_hora_chegada' => $agora,
+                'ativo'             => false, // ajuste para o campo usado (ex: 'ativo' => false ou 'status' => 'finalizada')
+            ]);
+
+            // 2. Registra o desembarque APENAS dos passageiros que EMBARCARAM,
+            // mas que ainda não haviam registrado a chegada.
+            DB::table('passageiros')
+                ->where('viagem_id', $viagem->id)
+                ->whereNotNull('data_hora_saida')    // Garantia: Apenas quem realmente embarcou
+                ->whereNull('data_hora_chegada')     // Apenas quem ainda não tinha registrado o desembarque
+                ->update([
+                    'data_hora_chegada' => $agora,
+                    'updated_at'        => $agora,
+                ]);
+        });
 
         return redirect()->back()->with('success', 'Viagem finalizada com sucesso!');
     }

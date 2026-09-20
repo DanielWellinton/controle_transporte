@@ -24,7 +24,17 @@ class MotoristaController extends Controller
      */
     public function create()
     {
-        $usuarios = User::all();
+        $usuarios = User::whereHas('papeis', function ($query) {
+            $query->where('descricao', 'Motorista')
+                  ->where('papels.ativo', true)
+                  ->where('usuario_papels.ativo', true)
+                  ->where(function ($q) {
+                      $q->whereNull('usuario_papels.data_hora_fim')
+                        ->orWhere('usuario_papels.data_hora_fim', '>', now());
+                  });
+        })
+        ->with(['motorista', 'papeis'])
+        ->get();
         return view('motoristas.create', compact('usuarios'));
     }
 

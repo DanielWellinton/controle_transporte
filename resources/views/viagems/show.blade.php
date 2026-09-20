@@ -103,7 +103,7 @@
             <span class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Informações Operacionais</span>
             <p class="text-xs text-slate-700"><strong>Rota:</strong> {{ $viagem->rota->descricao ?? 'N/A' }}</p>
             <p class="text-xs text-slate-700"><strong>Motorista:</strong> {{ $viagem->motorista->usuario->name ?? 'N/A' }}</p>
-            <p class="text-xs text-slate-700"><strong>Veículo:</strong> {{ $viagem->veiculo->descricao ?? $viagem->veiculo->modelo ?? 'N/A' }} <span class="font-mono font-bold uppercase">({{ $viagem->veiculo->placa ?? '' }})</span></p>
+            <p class="text-xs text-slate-700"><strong>Veículo:</strong> {{ $viagem->veiculo->descricao ?? $viagem->veiculo->descricao ?? 'N/A' }} <span class="font-mono font-bold uppercase">({{ $viagem->veiculo->placa ?? '' }})</span></p>
             <p class="text-xs text-slate-700"><strong>Passageiros:</strong> {{ $viagem->passageiros->count() }}</p>
         </div>
 
