@@ -1,58 +1,148 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Controle de Transporte - Gestão Municipal
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este é o sistema de **Controle de Transporte Escolar**, uma plataforma digital segura e organizada para consultar rotas, selecionar pontos de embarque/desembarque e validar acessos via QR Code.
 
-## About Laravel
+Este documento contém as instruções para rodar o projeto em um ambiente de desenvolvimento. Você pode escolher entre duas formas de subir a aplicação: usando **Docker (Recomendado)** ou configurando o **Ambiente Local Manualmente**.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🐳 Opção 1: Rodando com Docker (Recomendado)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+O uso do Docker evita a necessidade de instalar PHP, Composer, Node e MySQL diretamente na sua máquina.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Pré-requisitos
 
-## Learning Laravel
+* **Docker Desktop** instalado e rodando.
+* **Git** (opcional, para clonar o repositório).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Passo a Passo (Docker)
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+1. **Preparar as variáveis de ambiente:**
+   No terminal, faça uma cópia do arquivo de configuração:
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+   ```bash
+   cp .env.example .env
+   ```
+   *(No Windows, use: `copy .env.example .env`)*
 
-## Agentic Development
+2. **Instalar Dependências Iniciais (Composer):**
+   Execute o comando abaixo para baixar a pasta `vendor` usando um container temporário:
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+   ```bash
+   docker run --rm -v ${PWD}:/app -e COMPOSER_PROCESS_TIMEOUT=3600 composer install --ignore-platform-reqs
+   ```
 
-```bash
-composer require laravel/boost --dev
+3. **Subir a Infraestrutura:**
+   Inicie os containers em segundo plano:
 
-php artisan boost:install
-```
+   ```bash
+   docker compose up -d --build
+   ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+4. **Configurar o Laravel e o Banco de Dados:**
+   Gere a chave da aplicação e rode as migrações/seeders:
 
-## Contributing
+   ```bash
+   docker compose exec laravel.test php artisan key:generate
+   docker compose exec laravel.test php artisan migrate --seed
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+5. **Compilar o Front-end (Vite):**
+   Instale os pacotes do Node.js e inicie o servidor front-end (deixe este comando rodando no terminal):
 
-## Code of Conduct
+   ```bash
+   docker compose exec laravel.test npm install
+   docker compose exec laravel.test npm run dev -- --host
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+6. **Acessar a Aplicação:**
+   * **Pelo Computador:** Acesse `http://127.0.0.1` no seu navegador.
+   * **Pelo Celular (na mesma rede Wi-Fi):** Descubra o IP do seu PC (comando `ipconfig` no Windows) e acesse `http://192.168.X.X`.
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 💻 Opção 2: Instalação Manual (Ambiente Local)
 
-## License
+Caso prefira rodar sem o Docker, você precisará configurar o ambiente diretamente no seu sistema operacional.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Pré-requisitos
+
+* **PHP** (versão 8.2 ou superior).
+* **Composer**.
+* **Node.js** e **NPM**.
+* **MySQL**.
+
+### Passo a Passo (Manual)
+
+1. **Configurar o PHP:**
+   Vá até a pasta onde o PHP foi instalado, encontre o arquivo `php.ini` e abra-o em um editor de texto.
+   Procure pelas seguintes linhas e remova o ponto e vírgula (`;`) do início para ativá-las. Em seguida, salve o arquivo:
+
+   ```ini
+   extension_dir = "ext"
+   extension=pdo_mysql
+   extension=mysqli
+   extension=fileinfo
+   extension=gd
+   ```
+
+2. **Instalar Dependências (Composer):**
+   No terminal, na raiz do projeto, execute:
+
+   ```bash
+   composer install
+   ```
+
+3. **Criar o Banco de Dados:**
+   Abra seu gerenciador do MySQL ou o terminal MySQL e execute o comando:
+
+   ```sql
+   CREATE DATABASE controle_transporte;
+   ```
+
+4. **Preparar as variáveis de ambiente:**
+   No terminal, copie o arquivo de configuração:
+
+   ```bash
+   cp .env.example .env
+   ```
+   *(No Windows, use: `copy .env.example .env`)*
+
+5. **Gerar a Chave da Aplicação:**
+
+   ```bash
+   php artisan key:generate
+   ```
+
+6. **Configurar o Banco de Dados no `.env`:**
+   Abra o arquivo `.env` e atualize a seção de banco de dados com as suas credenciais locais:
+
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=controle_transporte
+   DB_USERNAME=root
+   DB_PASSWORD=coloque_sua_senha_aqui
+   ```
+
+7. **Rodar Migrations e Seeders:**
+   Construa as tabelas e povoe o banco de dados:
+
+   ```bash
+   php artisan migrate --seed
+   ```
+
+8. **Compilar o Front-end:**
+   Instale os pacotes e construa os arquivos finais:
+
+   ```bash
+   npm install
+   npm run build
+   ```
+
+9. **Rodar o Servidor Local:**
+   Inicie o servidor embutido do PHP:
+
+   ```bash
+   php artisan serve
+   ```
+   Acesse a aplicação no navegador através do link gerado no terminal (geralmente `http://localhost:8000`).
