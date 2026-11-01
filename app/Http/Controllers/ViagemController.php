@@ -117,6 +117,7 @@ class ViagemController extends Controller
 
         $viagemDuplicada->data_hora_saida = null;
         $viagemDuplicada->data_hora_chegada = null;
+        $viagemDuplicada->codigo_qr = null;
 
         $rotas = Rota::where('ativo', true)->orWhere('id', $viagem->rota_id)->get();
         $motoristas = Motorista::where('ativo', true)->orWhere('id', $viagem->motorista_id)->get();
